@@ -35,6 +35,10 @@ $$;
 
 -- ============================================================
 -- AUTO-CREATE PROFILE ON USER SIGNUP
+-- Every new user gets the baseline 'viewer' role. The role is
+-- NEVER read from client-supplied metadata (prevents
+-- self-privilege-escalation). Admins promote users afterwards via a
+-- manual UPDATE on public.profiles.
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger
@@ -46,7 +50,7 @@ begin
   insert into public.profiles (id, role, display_name)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data ->> 'role', 'technician'),
+    'viewer',
     coalesce(
       new.raw_user_meta_data ->> 'display_name',
       split_part(new.email, '@', 1)
@@ -174,15 +178,11 @@ create policy "maintenance_delete"
   using (public.user_role() = 'admin');
 
 -- --- PROFILES ----------------------------------------------
-drop policy if exists "profiles_select_own" on public.profiles;
-create policy "profiles_select_own"
+-- Users can read their own profile; admins can read any profile.
+drop policy if exists "profiles_select" on public.profiles;
+create policy "profiles_select"
   on public.profiles for select
   using (id = auth.uid() or public.user_role() = 'admin');
-
-drop policy if exists "profiles_select_admin" on public.profiles;
-create policy "profiles_select_admin"
-  on public.profiles for select
-  using (public.user_role() = 'admin');
 
 drop policy if exists "profiles_insert" on public.profiles;
 create policy "profiles_insert"
@@ -195,11 +195,8 @@ create policy "profiles_update_admin"
   using (public.user_role() = 'admin')
   with check (public.user_role() = 'admin');
 
-drop policy if exists "profiles_update_own_display" on public.profiles;
-create policy "profiles_update_own_display"
-  on public.profiles for update
-  using (id = auth.uid())
-  with check (id = auth.uid());
+-- No self-update policy: users must NOT be able to mutate their own
+-- profile (which would allow role escalation). Only admins update roles.
 
 drop policy if exists "profiles_delete" on public.profiles;
 create policy "profiles_delete"
@@ -226,6 +223,26 @@ grant select on public.profiles to authenticated;
 
 -- ============================================================
 -- SEED ADMIN USER
--- After creating a user in Supabase Auth, run:
---   update public.profiles set role = 'admin' where id = '<user-uuid>';
+-- 1. Create your first user (via the /signup page or Supabase Auth).
+--    Every new user automatically becomes 'viewer'.
+-- 2. In the Supabase SQL Editor, find their UUID:
+--      select id, email from auth.users;
+-- 3. Promote that user to admin (and/or technicians):
+--      update public.profiles set role = 'admin' where id = '<user-uuid>';
+--      update public.profiles set role = 'technician' where id = '<user-uuid>';
+-- ============================================================
+
+-- ============================================================
+-- INSTITUTIONAL PERMISSION MATRIX (enforced by RLS above and by
+-- the frontend role guards in app/page.tsx, app/connections/page.tsx,
+-- app/maintenance/page.tsx, app/components/Header.tsx)
+--
+--   ROLE       | ASSETS                     | PORTS/CABLES             | MAINTENANCE LOGS        | PROFILES
+--   -----------+----------------------------+--------------------------+-------------------------+------------------
+--   admin      | view/add/edit/delete       | view/add/edit/delete     | view/add/edit/delete    | view/update (roles)
+--   technician | view/add/edit (no delete)  | view/add/edit (no delete)| view/add (no delete)    | view own
+--   viewer     | view only                  | view only                | view only               | view own
+--
+-- RLS: SELECT = any authenticated user; INSERT/UPDATE =
+-- admin + technician; DELETE = admin only. Profiles UPDATE = admin only.
 -- ============================================================

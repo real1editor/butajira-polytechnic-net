@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 
 const inputClass =
@@ -85,8 +86,14 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-zinc-500 dark:text-zinc-500">
-          Accounts are provisioned by the IT administrator.
+        <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          Need an account?{" "}
+          <Link
+            href="/signup"
+            className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-200"
+          >
+            Create one
+          </Link>
         </p>
       </div>
     </main>
