@@ -117,6 +117,29 @@ export const OUTCOME_STYLES: Record<MaintenanceOutcome, string> = {
   failed: "bg-red-100 text-red-800",
 };
 
+export async function updateAsset(
+  id: string,
+  payload: Partial<
+    Pick<Asset, "name" | "type" | "status" | "location" | "ip_address" | "asset_tag">
+  >
+): Promise<string | null> {
+  const updates: Record<string, unknown> = {};
+  if ("name" in payload) updates.name = payload.name?.trim();
+  if ("asset_tag" in payload) updates.asset_tag = payload.asset_tag?.trim() || null;
+  if ("type" in payload) updates.type = payload.type;
+  if ("status" in payload) updates.status = payload.status;
+  if ("location" in payload) updates.location = payload.location?.trim() || null;
+  if ("ip_address" in payload) updates.ip_address = payload.ip_address?.trim() || null;
+
+  const { error } = await supabase.from("assets").update(updates).eq("id", id);
+  return message(error);
+}
+
+export async function deleteAsset(id: string): Promise<string | null> {
+  const { error } = await supabase.from("assets").delete().eq("id", id);
+  return message(error);
+}
+
 export async function fetchAssets(): Promise<QueryResult<Asset>> {
   const { data, error } = await supabase
     .from("assets")
@@ -190,6 +213,14 @@ export async function updateCableStatus(
   status: CableStatus
 ): Promise<string | null> {
   const { error } = await supabase.from("cables").update({ status }).eq("id", id);
+  return message(error);
+}
+
+export async function deleteMaintenanceLog(id: string): Promise<string | null> {
+  const { error } = await supabase
+    .from("maintenance_logs")
+    .delete()
+    .eq("id", id);
   return message(error);
 }
 

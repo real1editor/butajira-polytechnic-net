@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Asset,
   CableJoined,
+  CableStatus,
   CableType,
   CABLE_STATUS_STYLES,
   CABLE_TYPE_LABELS,
@@ -17,9 +18,12 @@ import {
   insertPort,
   updateCableStatus,
 } from "@/lib/queries";
+import { useAuth } from "@/app/contexts/AuthContext";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
+import Toast from "@/app/components/Toast";
 
 const inputClass =
-  "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none";
+  "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
 
 const comparePorts = (a: PortJoined, b: PortJoined) => {
   const nameDiff = a.assets.name.localeCompare(b.assets.name);
@@ -31,12 +35,19 @@ const comparePorts = (a: PortJoined, b: PortJoined) => {
 };
 
 export default function ConnectionsPage() {
+  const { profile } = useAuth();
+  const role = profile?.role ?? "viewer";
+  const canManage = role === "admin" || role === "technician";
+  const canDecommission = role === "admin";
+
   const [assets, setAssets] = useState<Asset[]>([]);
   const [ports, setPorts] = useState<PortJoined[]>([]);
   const [cables, setCables] = useState<CableJoined[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<CableJoined | null>(null);
 
   const [form, setForm] = useState({
     assetA: "",
@@ -156,15 +167,41 @@ export default function ConnectionsPage() {
       cable_type: "Cat6",
       length_m: "",
     });
+    setToast({ type: "success", message: "Cable connected successfully." });
     setSaving(false);
     refreshData();
   }
 
-  async function handleDecommission(cable: CableJoined) {
+  function handleStatusChange(cable: CableJoined) {
+    const nextStatus: CableStatus = cable.status === "active" ? "planned" : "active";
+    updateCableStatus(cable.id, nextStatus).then((err) => {
+      if (err) setError(err);
+      else {
+        setToast({
+          type: "success",
+          message: `Cable marked as ${nextStatus}.`,
+        });
+        refreshData();
+      }
+    });
+  }
+
+  function confirmDecommission(cable: CableJoined) {
+    setConfirmTarget(cable);
+  }
+
+  async function handleDecommission() {
+    if (!confirmTarget) return;
+    setSaving(true);
     setError(null);
-    const updateError = await updateCableStatus(cable.id, "decommissioned");
+    const updateError = await updateCableStatus(confirmTarget.id, "decommissioned");
     if (updateError) setError(updateError);
-    else refreshData();
+    else {
+      setToast({ type: "success", message: "Cable decommissioned." });
+      refreshData();
+    }
+    setConfirmTarget(null);
+    setSaving(false);
   }
 
   async function handleAddPort(e: FormEvent<HTMLFormElement>) {
@@ -179,163 +216,207 @@ export default function ConnectionsPage() {
     if (insertError) setError(insertError);
     else {
       setPortForm({ asset_id: "", port_number: "", port_type: "RJ45" });
+      setToast({ type: "success", message: "Port added." });
       refreshData();
     }
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900">
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-        <header className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight">
+    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+      {confirmTarget && (
+        <ConfirmDialog
+          open={!!confirmTarget}
+          title="Decommission cable"
+          message={`Mark "${confirmTarget.label}" as decommissioned? This frees both ports.`}
+          confirmLabel="Decommission"
+          busy={saving}
+          onConfirm={handleDecommission}
+          onCancel={() => setConfirmTarget(null)}
+        />
+      )}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <header className="mb-6 sm:mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             Connections & Port Mapping
           </h1>
-          <p className="mt-1 text-zinc-600">
+          <p className="mt-1 text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
             Patch cables between device ports, and manage port assignments
           </p>
         </header>
 
         {error && (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              aria-label="Dismiss error"
+              className="shrink-0 rounded p-0.5 text-red-400 transition-colors hover:text-red-700"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
         )}
 
-        <section className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-1 text-lg font-medium">New Connection</h2>
-          <p className="mb-4 text-sm text-zinc-600">
-            Select the two endpoints (device + port) to link with a cable.
-          </p>
-          <form onSubmit={handleAddCable} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Endpoint A — Asset
-              <select
-                value={form.assetA}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, assetA: e.target.value, portA: "" }))
-                }
-                className={inputClass}
-              >
-                <option value="">Select asset...</option>
-                {assets.map((asset) => (
-                  <option key={asset.id} value={asset.id}>
-                    {asset.name} ({TYPE_LABELS[asset.type]})
+        {canManage && (
+          <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="mb-1 text-lg font-medium">New Connection</h2>
+            <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+              Select the two endpoints (device + port) to link with a cable.
+            </p>
+            <form
+              onSubmit={handleAddCable}
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Endpoint A — Asset
+                <select
+                  value={form.assetA}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, assetA: e.target.value, portA: "" }))
+                  }
+                  className={inputClass}
+                >
+                  <option value="">Select asset...</option>
+                  {assets.map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.name} ({TYPE_LABELS[asset.type]})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Endpoint A — Port
+                <select
+                  value={form.portA}
+                  onChange={(e) => handleChange("portA", e.target.value)}
+                  disabled={!form.assetA}
+                  className={inputClass}
+                >
+                  <option value="">
+                    {!form.assetA ? "Select asset first" : portsOfA.length ? "Select free port..." : "No free ports"}
                   </option>
-                ))}
-              </select>
-            </label>
+                  {portsOfA.map((port) => (
+                    <option key={port.id} value={port.id}>
+                      Port {port.port_number} ({port.port_type})
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Endpoint A — Port
-              <select
-                value={form.portA}
-                onChange={(e) => handleChange("portA", e.target.value)}
-                disabled={!form.assetA}
-                className={inputClass}
-              >
-                <option value="">
-                  {!form.assetA ? "Select asset first" : portsOfA.length ? "Select free port..." : "No free ports"}
-                </option>
-                {portsOfA.map((port) => (
-                  <option key={port.id} value={port.id}>
-                    Port {port.port_number} ({port.port_type})
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Endpoint B — Asset
+                <select
+                  value={form.assetB}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, assetB: e.target.value, portB: "" }))
+                  }
+                  className={inputClass}
+                >
+                  <option value="">Select asset...</option>
+                  {assets.map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.name} ({TYPE_LABELS[asset.type]})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Endpoint B — Port
+                <select
+                  value={form.portB}
+                  onChange={(e) => handleChange("portB", e.target.value)}
+                  disabled={!form.assetB}
+                  className={inputClass}
+                >
+                  <option value="">
+                    {!form.assetB ? "Select asset first" : portsOfB.length ? "Select free port..." : "No free ports"}
                   </option>
-                ))}
-              </select>
-            </label>
+                  {portsOfB.map((port) => (
+                    <option key={port.id} value={port.id}>
+                      Port {port.port_number} ({port.port_type})
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Endpoint B — Asset
-              <select
-                value={form.assetB}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, assetB: e.target.value, portB: "" }))
-                }
-                className={inputClass}
-              >
-                <option value="">Select asset...</option>
-                {assets.map((asset) => (
-                  <option key={asset.id} value={asset.id}>
-                    {asset.name} ({TYPE_LABELS[asset.type]})
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Label
+                <input
+                  type="text"
+                  value={form.label}
+                  onChange={(e) => handleChange("label", e.target.value)}
+                  placeholder="Auto-generated if blank"
+                  className={inputClass}
+                />
+              </label>
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Endpoint B — Port
-              <select
-                value={form.portB}
-                onChange={(e) => handleChange("portB", e.target.value)}
-                disabled={!form.assetB}
-                className={inputClass}
-              >
-                <option value="">
-                  {!form.assetB ? "Select asset first" : portsOfB.length ? "Select free port..." : "No free ports"}
-                </option>
-                {portsOfB.map((port) => (
-                  <option key={port.id} value={port.id}>
-                    Port {port.port_number} ({port.port_type})
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Cable Type
+                <select
+                  value={form.cable_type}
+                  onChange={(e) => handleChange("cable_type", e.target.value)}
+                  className={inputClass}
+                >
+                  {Object.entries(CABLE_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Label
-              <input
-                type="text"
-                value={form.label}
-                onChange={(e) => handleChange("label", e.target.value)}
-                placeholder="Auto-generated if blank"
-                className={inputClass}
-              />
-            </label>
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Length (m)
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.length_m}
+                  onChange={(e) => handleChange("length_m", e.target.value)}
+                  placeholder="e.g. 3.5"
+                  className={inputClass}
+                />
+              </label>
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Cable Type
-              <select
-                value={form.cable_type}
-                onChange={(e) => handleChange("cable_type", e.target.value)}
-                className={inputClass}
-              >
-                {Object.entries(CABLE_TYPE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  disabled={saving || !form.portA || !form.portB}
+                  className="w-full rounded-md bg-zinc-900 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                >
+                  {saving ? "Connecting..." : "Connect"}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Length (m)
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.length_m}
-                onChange={(e) => handleChange("length_m", e.target.value)}
-                placeholder="e.g. 3.5"
-                className={inputClass}
-              />
-            </label>
-
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={saving || !form.portA || !form.portB}
-                className="w-full rounded-md bg-zinc-900 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving ? "Connecting..." : "Connect"}
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section className="mb-8 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-          <div className="border-b border-zinc-200 px-6 py-4">
+        <section className="mb-6 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm sm:mb-8 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-800">
             <h2 className="text-lg font-medium">Registered Cables</h2>
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               {loading ? "Loading..." : `${cables.length} total`}
             </p>
           </div>
@@ -346,66 +427,87 @@ export default function ConnectionsPage() {
             </div>
           ) : cables.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-zinc-500">
-              No cables registered yet. Link two free ports above.
+              {canManage
+                ? "No cables registered yet. Link two free ports above."
+                : "No cables registered yet."}
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-zinc-200 text-sm">
-                <thead className="bg-zinc-50">
+              <table className="min-w-[640px] divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
+                <thead className="bg-zinc-50 dark:bg-zinc-800/50">
                   <tr>
-                    <th className="px-6 py-3 text-left font-medium text-zinc-500">Label</th>
-                    <th className="px-6 py-3 text-left font-medium text-zinc-500">Type</th>
-                    <th className="px-6 py-3 text-left font-medium text-zinc-500">Length</th>
-                    <th className="px-6 py-3 text-left font-medium text-zinc-500">Endpoint A</th>
-                    <th className="px-6 py-3 text-left font-medium text-zinc-500">Endpoint B</th>
-                    <th className="px-6 py-3 text-left font-medium text-zinc-500">Status</th>
-                    <th className="px-6 py-3" />
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Label</th>
+                    <th className="hidden px-4 py-3 text-left font-medium text-zinc-500 sm:table-cell sm:px-6 dark:text-zinc-400">Type</th>
+                    <th className="hidden px-4 py-3 text-left font-medium text-zinc-500 sm:table-cell sm:px-6 dark:text-zinc-400">Length</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Endpoint A</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Endpoint B</th>
+                    <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Status</th>
+                    {canManage && (
+                      <th className="px-4 py-3 text-right font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Actions</th>
+                    )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {[...cables]
                     .sort((a, b) => comparePorts(a.endpoint_a, b.endpoint_a))
                     .map((cable) => (
-                      <tr key={cable.id} className="hover:bg-zinc-50">
-                        <td className="px-6 py-3 font-medium text-zinc-900">
+                      <tr key={cable.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                        <td className="px-4 py-3 font-medium sm:px-6">
                           {cable.label}
                         </td>
-                        <td className="px-6 py-3 text-zinc-600">
+                        <td className="hidden px-4 py-3 text-zinc-600 sm:table-cell sm:px-6 dark:text-zinc-400">
                           {CABLE_TYPE_LABELS[cable.cable_type]}
                         </td>
-                        <td className="px-6 py-3 text-zinc-600">
+                        <td className="hidden px-4 py-3 text-zinc-600 sm:table-cell sm:px-6 dark:text-zinc-400">
                           {cable.length_m != null ? `${cable.length_m} m` : "—"}
                         </td>
-                        <td className="px-6 py-3 text-zinc-600">
-                          <span className="font-medium text-zinc-900">
+                        <td className="px-4 py-3 sm:px-6">
+                          <span className="block font-medium">
                             {cable.endpoint_a.assets.name}
                           </span>
-                          <span className="font-mono"> · P{cable.endpoint_a.port_number}</span>
+                          <span className="font-mono text-xs text-zinc-500">
+                            P{cable.endpoint_a.port_number}
+                          </span>
                         </td>
-                        <td className="px-6 py-3 text-zinc-600">
-                          <span className="font-medium text-zinc-900">
+                        <td className="px-4 py-3 sm:px-6">
+                          <span className="block font-medium">
                             {cable.endpoint_b.assets.name}
                           </span>
-                          <span className="font-mono"> · P{cable.endpoint_b.port_number}</span>
+                          <span className="font-mono text-xs text-zinc-500">
+                            P{cable.endpoint_b.port_number}
+                          </span>
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-4 py-3 sm:px-6">
                           <span
                             className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${CABLE_STATUS_STYLES[cable.status]}`}
                           >
                             {cable.status}
                           </span>
                         </td>
-                        <td className="px-6 py-3 text-right">
-                          {cable.status === "active" && (
-                            <button
-                              type="button"
-                              onClick={() => handleDecommission(cable)}
-                              className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-900"
-                            >
-                              Decommission
-                            </button>
-                          )}
-                        </td>
+                        {canManage && (
+                          <td className="px-4 py-3 sm:px-6">
+                            <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                              {cable.status !== "decommissioned" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleStatusChange(cable)}
+                                  className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-900 dark:hover:text-white"
+                                >
+                                  {cable.status === "active" ? "Mark planned" : "Mark active"}
+                                </button>
+                              )}
+                              {cable.status === "active" && canDecommission && (
+                                <button
+                                  type="button"
+                                  onClick={() => confirmDecommission(cable)}
+                                  className="text-sm font-medium text-zinc-400 transition-colors hover:text-red-600"
+                                >
+                                  Decommission
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                 </tbody>
@@ -414,68 +516,70 @@ export default function ConnectionsPage() {
           )}
         </section>
 
-        <section className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-2 text-lg font-medium">Add a Port</h2>
-          <p className="mb-4 text-sm text-zinc-600">
-            Ports are generated automatically for new switches (24), patch panels
-            (48), and routers (WAN/LAN). Add extras manually if needed.
-          </p>
-          <form
-            onSubmit={handleAddPort}
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          >
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Asset
-              <select
-                value={portForm.asset_id}
-                onChange={(e) => handlePortChange("asset_id", e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Select asset...</option>
-                {assets.map((asset) => (
-                  <option key={asset.id} value={asset.id}>
-                    {asset.name} ({TYPE_LABELS[asset.type]})
-                  </option>
-                ))}
-              </select>
-            </label>
+        {canManage && (
+          <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="mb-1 text-lg font-medium">Add a Port</h2>
+            <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+              Ports are generated automatically for new switches (24), patch
+              panels (48), and routers (WAN/LAN). Add extras manually if needed.
+            </p>
+            <form
+              onSubmit={handleAddPort}
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Asset
+                <select
+                  value={portForm.asset_id}
+                  onChange={(e) => handlePortChange("asset_id", e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Select asset...</option>
+                  {assets.map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.name} ({TYPE_LABELS[asset.type]})
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Port Number
-              <input
-                type="text"
-                value={portForm.port_number}
-                onChange={(e) => handlePortChange("port_number", e.target.value)}
-                placeholder="e.g. 25 or Gi0/1"
-                className={inputClass}
-              />
-            </label>
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Port Number
+                <input
+                  type="text"
+                  value={portForm.port_number}
+                  onChange={(e) => handlePortChange("port_number", e.target.value)}
+                  placeholder="e.g. 25 or Gi0/1"
+                  className={inputClass}
+                />
+              </label>
 
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Port Type
-              <select
-                value={portForm.port_type}
-                onChange={(e) => handlePortChange("port_type", e.target.value)}
-                className={inputClass}
-              >
-                <option value="RJ45">RJ45</option>
-                <option value="SFP">SFP</option>
-                <option value="SFP+">SFP+</option>
-                <option value="Fiber">Fiber</option>
-              </select>
-            </label>
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Port Type
+                <select
+                  value={portForm.port_type}
+                  onChange={(e) => handlePortChange("port_type", e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="RJ45">RJ45</option>
+                  <option value="SFP">SFP</option>
+                  <option value="SFP+">SFP+</option>
+                  <option value="Fiber">Fiber</option>
+                </select>
+              </label>
 
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={!portForm.asset_id || !portForm.port_number.trim()}
-                className="w-full rounded-md border border-zinc-300 bg-white px-6 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Add Port
-              </button>
-            </div>
-          </form>
-        </section>
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  disabled={!portForm.asset_id || !portForm.port_number.trim()}
+                  className="w-full rounded-md border border-zinc-300 bg-white px-6 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                >
+                  Add Port
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
       </main>
     </div>
   );
