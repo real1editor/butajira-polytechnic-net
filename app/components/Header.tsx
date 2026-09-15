@@ -19,11 +19,11 @@ const THEME_OPTIONS = [
 ] as const;
 
 function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
 
   const icon =
-    theme === "dark" ? (
+    resolvedTheme === "dark" ? (
       <svg
         className="h-4 w-4"
         fill="none"
@@ -62,7 +62,6 @@ function ThemeToggle() {
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
       >
         {icon}
-        <span className="hidden capitalize sm:inline">{theme}</span>
       </button>
       {open && (
         <>
@@ -160,7 +159,8 @@ function UserMenu() {
 export default function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
+  const isAuthed = !!user;
 
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95">
@@ -173,71 +173,75 @@ export default function Header() {
         </Link>
 
         <div className="flex items-center gap-1">
-          <nav className="hidden items-center gap-1 md:flex">
-            {LINKS.map((link) => {
-              const active =
-                pathname === link.href ||
-                (link.href !== "/" && pathname.startsWith(link.href));
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+          {isAuthed && (
+            <nav className="hidden items-center gap-1 md:flex">
+              {LINKS.map((link) => {
+                const active =
+                  pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(link.href));
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
           <ThemeToggle />
           {!loading && <UserMenu />}
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Toggle navigation menu"
-            aria-expanded={mobileOpen}
-            className="rounded-md p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 md:hidden dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-          >
-            {mobileOpen ? (
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            )}
-          </button>
+          {isAuthed && (
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileOpen}
+              className="rounded-md p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 md:hidden dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            >
+              {mobileOpen ? (
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
-      {mobileOpen && (
+      {isAuthed && mobileOpen && (
         <nav className="border-t border-zinc-200 md:hidden dark:border-zinc-800">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-2 sm:px-6">
             {LINKS.map((link) => {
