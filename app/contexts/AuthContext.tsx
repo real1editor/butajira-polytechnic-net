@@ -22,17 +22,25 @@ export type Profile = {
 type AuthContextType = {
   user: { id: string; email: string | null } | null;
   profile: Profile | null;
+  role: UserRole;
+  canManage: boolean;
+  canDelete: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
+  role: "viewer",
+  canManage: false,
+  canDelete: false,
   loading: true,
   signIn: async () => null,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
@@ -79,6 +87,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const refreshProfile = useCallback(async () => {
+    if (!user) return;
+    const p = await fetchProfile(user.id);
+    setProfile(p);
+  }, [user]);
+
   const signIn = useCallback(
     async (email: string, password: string): Promise<string | null> => {
       const { error } = await supabase.auth.signInWithPassword({
@@ -101,11 +115,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }, [router]);
 
+  // Fail-closed defaults: until the profile resolves (or if it is missing)
+  // the session is treated as the least-privileged 'viewer' role.
+  const role: UserRole = profile?.role ?? "viewer";
+  const canManage = role === "admin" || role === "technician";
+  const canDelete = role === "admin";
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        role,
+        canManage,
+        canDelete,
+        loading,
+        signIn,
+        signOut,
+        refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export const useAuth = () => useContext(AuthContext);
+
+/** Minimal subscription to the current user + role (alias of useAuth). */
+export function useUser() {
+  const { user, profile, role, loading } = useAuth();
+  return { user, profile, role, loading };
+}
+
+/** Derivable permission flags used to gate UI actions by role. */
+export function usePermissions() {
+  const { role, canManage, canDelete } = useAuth();
+  return {
+    role,
+    isAdmin: role === "admin",
+    isTechnician: role === "technician",
+    isViewer: role === "viewer",
+    canManage,
+    canEdit: canManage,
+    canDelete,
+  };
+}

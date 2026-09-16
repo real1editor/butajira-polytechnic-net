@@ -1,4 +1,12 @@
 import { supabase } from "@/lib/supabase";
+import type { UserRole } from "@/app/contexts/AuthContext";
+
+export type UserProfile = {
+  id: string;
+  role: UserRole;
+  display_name: string | null;
+  created_at: string;
+};
 
 export type AssetType = "switch" | "router" | "patch_panel";
 export type AssetStatus = "active" | "maintenance" | "offline" | "decommissioned";
@@ -255,6 +263,22 @@ export async function insertMaintenanceLog(payload: {
     cost: payload.cost,
     outcome: payload.outcome,
   });
+  return message(error);
+}
+
+export async function fetchProfiles(): Promise<QueryResult<UserProfile>> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, role, display_name, created_at")
+    .order("created_at", { ascending: false });
+  return { data: (data as UserProfile[] | null) ?? null, error: message(error) };
+}
+
+export async function updateUserRole(
+  id: string,
+  role: UserRole
+): Promise<string | null> {
+  const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
   return message(error);
 }
 

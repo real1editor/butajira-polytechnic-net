@@ -43,5 +43,21 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Admin-only routes: verify the caller's profile role server-side as a
+  // second layer on top of the client-side <ProtectRole> guards. RLS still
+  // blocks any direct data mutation for non-admins.
+  if (user && url.pathname.startsWith("/admin")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile || profile.role !== "admin") {
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }

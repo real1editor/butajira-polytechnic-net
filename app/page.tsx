@@ -15,7 +15,8 @@ import {
   insertAsset,
   updateAsset,
 } from "@/lib/queries";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { usePermissions } from "@/app/contexts/AuthContext";
+import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import Modal from "@/app/components/Modal";
 import Toast from "@/app/components/Toast";
@@ -39,10 +40,7 @@ type StatCard = {
 };
 
 export default function Home() {
-  const { profile } = useAuth();
-  const role = profile?.role ?? "viewer";
-  const canEdit = role === "admin" || role === "technician";
-  const canDelete = role === "admin";
+  const { canEdit, canDelete } = usePermissions();
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -324,7 +322,12 @@ export default function Home() {
           ))}
         </section>
 
-        {canEdit && (
+        <ProtectRole
+          allowedRoles={["admin", "technician"]}
+          fallback={
+            <ReadOnlyNotice message="Assets are shown in read-only mode. Contact an administrator to add, edit, or delete assets." />
+          }
+        >
           <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-4 text-lg font-medium">Add Asset</h2>
             <form
@@ -414,7 +417,7 @@ export default function Home() {
               </div>
             </form>
           </section>
-        )}
+        </ProtectRole>
 
         {error && (
           <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">

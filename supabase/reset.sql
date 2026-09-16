@@ -9,3 +9,4 @@ drop table if exists public.maintenance_logs cascade;
 drop table if exists public.cables cascade;
 drop table if exists public.ports cascade;
 drop table if exists public.assets cascade;
+drop table if exists public.profiles cascade;

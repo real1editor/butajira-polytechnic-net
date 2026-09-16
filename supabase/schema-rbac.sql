@@ -33,6 +33,9 @@ as $$
   );
 $$;
 
+-- Policies reference user_role(); make sure both app roles can invoke it.
+grant execute on function public.user_role() to anon, authenticated;
+
 -- ============================================================
 -- AUTO-CREATE PROFILE ON USER SIGNUP
 -- Every new user gets the baseline 'viewer' role. The role is
@@ -230,6 +233,15 @@ grant select on public.profiles to authenticated;
 -- 3. Promote that user to admin (and/or technicians):
 --      update public.profiles set role = 'admin' where id = '<user-uuid>';
 --      update public.profiles set role = 'technician' where id = '<user-uuid>';
+--
+-- BACKFILL (optional, run once on an existing install)
+-- Users created BEFORE this migration have no profile row, which also means
+-- the auth.users trigger never fired for them. Insert a baseline 'viewer'
+-- profile for every existing user (no self-created admin):
+--   insert into public.profiles (id, role, display_name)
+--   select id, 'viewer', split_part(email, '@', 1)
+--   from auth.users
+--   on conflict (id) do nothing;
 -- ============================================================
 
 -- ============================================================
@@ -237,11 +249,11 @@ grant select on public.profiles to authenticated;
 -- the frontend role guards in app/page.tsx, app/connections/page.tsx,
 -- app/maintenance/page.tsx, app/components/Header.tsx)
 --
---   ROLE       | ASSETS                     | PORTS/CABLES             | MAINTENANCE LOGS        | PROFILES
---   -----------+----------------------------+--------------------------+-------------------------+------------------
---   admin      | view/add/edit/delete       | view/add/edit/delete     | view/add/edit/delete    | view/update (roles)
---   technician | view/add/edit (no delete)  | view/add/edit (no delete)| view/add (no delete)    | view own
---   viewer     | view only                  | view only                | view only               | view own
+--   ROLE       | ASSETS                     | PORTS/CABLES             | MAINTENANCE LOGS            | PROFILES
+--   -----------+----------------------------+--------------------------+-----------------------------+------------------
+--   admin      | view/add/edit/delete       | view/add/edit/delete     | view/add/edit/delete        | view/update (roles)
+--   technician | view/add/edit (no delete)  | view/add/edit (no delete)| view/add/edit (no delete)   | view own
+--   viewer     | view only                  | view only                | view only                   | view own
 --
 -- RLS: SELECT = any authenticated user; INSERT/UPDATE =
 -- admin + technician; DELETE = admin only. Profiles UPDATE = admin only.

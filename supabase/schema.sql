@@ -265,57 +265,18 @@ group by a.id, a.name, a.type, a.status, a.location, a.ip_address;
 
 -- ============================================================
 -- ROW LEVEL SECURITY
+-- Enabling RLS makes these tables deny-by-default: without a matching
+-- policy every query is rejected, including for the table owner.
+-- The role-based policies (admin / technician / viewer) are defined in
+-- schema-rbac.sql. Do NOT add permissive (anon) policies here, and do not
+-- grant mutation privileges to the anon role.
 -- ============================================================
 alter table public.assets enable row level security;
 alter table public.ports enable row level security;
 alter table public.cables enable row level security;
 alter table public.maintenance_logs enable row level security;
 
--- Drop old policies if they exist, then recreate
-drop policy if exists "assets_anon_select" on public.assets;
-drop policy if exists "assets_anon_insert" on public.assets;
-drop policy if exists "assets_anon_update" on public.assets;
-drop policy if exists "assets_anon_delete" on public.assets;
-
-create policy "assets_anon_select" on public.assets for select using (true);
-create policy "assets_anon_insert" on public.assets for insert with check (true);
-create policy "assets_anon_update" on public.assets for update using (true) with check (true);
-create policy "assets_anon_delete" on public.assets for delete using (true);
-
-drop policy if exists "ports_anon_select" on public.ports;
-drop policy if exists "ports_anon_insert" on public.ports;
-drop policy if exists "ports_anon_update" on public.ports;
-drop policy if exists "ports_anon_delete" on public.ports;
-
-create policy "ports_anon_select" on public.ports for select using (true);
-create policy "ports_anon_insert" on public.ports for insert with check (true);
-create policy "ports_anon_update" on public.ports for update using (true) with check (true);
-create policy "ports_anon_delete" on public.ports for delete using (true);
-
-drop policy if exists "cables_anon_select" on public.cables;
-drop policy if exists "cables_anon_insert" on public.cables;
-drop policy if exists "cables_anon_insert" on public.cables;
-drop policy if exists "cables_anon_update" on public.cables;
-drop policy if exists "cables_anon_delete" on public.cables;
-
-create policy "cables_anon_select" on public.cables for select using (true);
-create policy "cables_anon_insert" on public.cables for insert with check (true);
-create policy "cables_anon_update" on public.cables for update using (true) with check (true);
-create policy "cables_anon_delete" on public.cables for delete using (true);
-
-drop policy if exists "maintenance_anon_select" on public.maintenance_logs;
-drop policy if exists "maintenance_anon_insert" on public.maintenance_logs;
-drop policy if exists "maintenance_anon_update" on public.maintenance_logs;
-drop policy if exists "maintenance_anon_delete" on public.maintenance_logs;
-
-create policy "maintenance_anon_select" on public.maintenance_logs for select using (true);
-create policy "maintenance_anon_insert" on public.maintenance_logs for insert with check (true);
-create policy "maintenance_anon_update" on public.maintenance_logs for update using (true) with check (true);
-create policy "maintenance_anon_delete" on public.maintenance_logs for delete using (true);
-
-grant select, insert, update, delete on
-  public.assets,
-  public.ports,
-  public.cables,
-  public.maintenance_logs
-to anon, authenticated;
+-- NOTE: adjacency table security is enforced exclusively through RLS
+-- policies created in schema-rbac.sql. Tables above expose no policies
+-- until that migration is applied, so a fresh deployment of schema.sql
+-- alone is fully locked down.

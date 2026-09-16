@@ -18,7 +18,8 @@ import {
   insertPort,
   updateCableStatus,
 } from "@/lib/queries";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { usePermissions } from "@/app/contexts/AuthContext";
+import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import Toast from "@/app/components/Toast";
 
