@@ -14,7 +14,8 @@ import {
   fetchMaintenanceLogs,
   insertMaintenanceLog,
 } from "@/lib/queries";
-import { useAuth } from "@/app/contexts/AuthContext";
+import { usePermissions } from "@/app/contexts/AuthContext";
+import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import Toast from "@/app/components/Toast";
 
@@ -36,10 +37,7 @@ const formatDate = (iso: string) => {
 };
 
 export default function MaintenancePage() {
-  const { profile } = useAuth();
-  const role = profile?.role ?? "viewer";
-  const canManage = role === "admin" || role === "technician";
-  const canDelete = role === "admin";
+  const { canManage, canDelete } = usePermissions();
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [logs, setLogs] = useState<MaintenanceJoined[]>([]);

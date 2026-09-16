@@ -36,10 +36,7 @@ const comparePorts = (a: PortJoined, b: PortJoined) => {
 };
 
 export default function ConnectionsPage() {
-  const { profile } = useAuth();
-  const role = profile?.role ?? "viewer";
-  const canManage = role === "admin" || role === "technician";
-  const canDecommission = role === "admin";
+  const { canManage, canDelete } = usePermissions();
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [ports, setPorts] = useState<PortJoined[]>([]);
@@ -278,7 +275,12 @@ export default function ConnectionsPage() {
           </div>
         )}
 
-        {canManage && (
+        <ProtectRole
+          allowedRoles={["admin", "technician"]}
+          fallback={
+            <ReadOnlyNotice message="Connections are shown in read-only mode. Contact an administrator to add or edit cables and ports." />
+          }
+        >
           <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-1 text-lg font-medium">New Connection</h2>
             <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
@@ -412,7 +414,7 @@ export default function ConnectionsPage() {
               </div>
             </form>
           </section>
-        )}
+        </ProtectRole>
 
         <section className="mb-6 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm sm:mb-8 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-800">
@@ -497,7 +499,7 @@ export default function ConnectionsPage() {
                                   {cable.status === "active" ? "Mark planned" : "Mark active"}
                                 </button>
                               )}
-                              {cable.status === "active" && canDecommission && (
+                              {cable.status === "active" && canDelete && (
                                 <button
                                   type="button"
                                   onClick={() => confirmDecommission(cable)}
@@ -517,7 +519,12 @@ export default function ConnectionsPage() {
           )}
         </section>
 
-        {canManage && (
+        <ProtectRole
+          allowedRoles={["admin", "technician"]}
+          fallback={
+            <ReadOnlyNotice message="Port management is restricted to administrators and technicians." />
+          }
+        >
           <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-1 text-lg font-medium">Add a Port</h2>
             <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
@@ -580,7 +587,7 @@ export default function ConnectionsPage() {
               </div>
             </form>
           </section>
-        )}
+        </ProtectRole>
       </main>
     </div>
   );
