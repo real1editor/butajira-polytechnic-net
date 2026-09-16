@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useTheme } from "@/app/contexts/ThemeContext";
+import ProtectRole from "@/app/components/ProtectRole";
 
 const LINKS = [
   { href: "/", label: "Dashboard" },
@@ -193,6 +194,18 @@ export default function Header() {
                   </Link>
                 );
               })}
+              <ProtectRole allowedRoles={["admin"]}>
+                <Link
+                  href="/admin/users"
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    pathname.startsWith("/admin")
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                >
+                  Users
+                </Link>
+              </ProtectRole>
             </nav>
           )}
 
@@ -263,6 +276,19 @@ export default function Header() {
                 </Link>
               );
             })}
+            <ProtectRole allowedRoles={["admin"]}>
+              <Link
+                href="/admin/users"
+                onClick={() => setMobileOpen(false)}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  pathname.startsWith("/admin")
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                }`}
+              >
+                Users
+              </Link>
+            </ProtectRole>
           </div>
         </nav>
       )}

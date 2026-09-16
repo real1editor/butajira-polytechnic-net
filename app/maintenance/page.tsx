@@ -201,7 +201,12 @@ export default function MaintenancePage() {
           </div>
         )}
 
-        {canManage && (
+        <ProtectRole
+          allowedRoles={["admin", "technician"]}
+          fallback={
+            <ReadOnlyNotice message="Maintenance logs are shown in read-only mode. Contact an administrator to add or edit logs." />
+          }
+        >
           <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-4 text-lg font-medium">Log Maintenance</h2>
             <form
@@ -332,7 +337,7 @@ export default function MaintenancePage() {
               </div>
             </form>
           </section>
-        )}
+        </ProtectRole>
 
         <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-800">
