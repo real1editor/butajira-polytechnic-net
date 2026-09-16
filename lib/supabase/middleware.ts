@@ -30,7 +30,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const url = request.nextUrl.clone();
-  const isPublicPath = url.pathname === "/login" || url.pathname === "/signup";
+  // Routes reachable without a session (login forms & password recovery).
+  const isPublicPath =
+    url.pathname === "/login" ||
+    url.pathname === "/signup" ||
+    url.pathname === "/forgot-password" ||
+    url.pathname === "/update-password";
+  // Auth landing pages: signed-in users have no business there.
+  const isAuthLanding =
+    url.pathname === "/login" || url.pathname === "/signup";
 
   if (!user && !isPublicPath) {
     url.pathname = "/login";
@@ -38,7 +46,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublicPath) {
+  if (user && isAuthLanding) {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }

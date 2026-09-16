@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Butajira Polytechnic — Network Asset & Cable Infrastructure Management
+
+A Role-Based Access Control (RBAC) system for tracking network assets, port mappings,
+patch cables, and maintenance work at Butajira Polytechnic College. Built with
+**Next.js (App Router)**, **Supabase** (Postgres + Auth), and **Tailwind CSS**.
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router) + TypeScript + Turbopack
+- **Backend:** Supabase — Postgres schema with Row Level Security (RLS), Auth, Realtime
+- **Styling:** Tailwind CSS 4
+
+## Prerequisites
+
+- Node.js 20+
+- A Supabase project (URL + anon key)
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+   ```bash
+   npm install
+   ```
+
+2. Create `.env.local` from the template:
+
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+   ```
+
+3. Run the app:
+
+   ```bash
+   npm run dev      # development
+   npm run build    # production build (also validates the proxy middleware)
+   npm run lint     # eslint
+   ```
+
+## Database Setup
+
+Apply the SQL files **in order** from the Supabase SQL Editor (or `supabase db push`):
+
+| Order | File            | Purpose                                                        |
+| ----- | --------------- | -------------------------------------------------------------- |
+| 1     | `reset.sql`     | Optional — wipes all data for a clean slate                    |
+| 2     | `schema.sql`    | Core tables (`assets`, `ports`, `cables`, `maintenance_logs`), auto-port trigger, full-text search-friendly design. Enables RLS (deny-by-default) |
+| 3     | `schema-rbac.sql` | `profiles` table, Auth signup trigger, role-based RLS policies, grants, Realtime |
+
+`schema-rbac.sql` is idempotent and can also be re-run on an existing install to
+upgrade from the legacy open (anon) policies. A **backfill** statement is included
+for users who signed up before this migration was applied.
+
+### Promoting your first admin
+
+Every new sign-up is automatically assigned the lowest-privilege `viewer` role by a
+database trigger. **The role is never read from client-supplied metadata**, so a user
+cannot self-promote. To bootstrap an admin:
+
+```sql
+-- 1. Find the user (or use the new /admin/users page once you have an admin)
+select id, email from auth.users;
+
+-- 2. Promote to admin / technician
+update public.profiles set role = 'admin' where id = '<user-uuid>';
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+After your first admin exists, subsequent role changes are done in-app under
+**Users** (admin-only) and take effect live via Supabase Realtime.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Role Model & Security
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Role       | Assets | Ports / Cables | Maintenance Logs | Profiles (roles) |
+| ---------- | ------ | -------------- | ---------------- | ---------------- |
+| **admin**  | CRUD   | CRUD           | CRUD             | view + update    |
+| **technician** | Read / Create / Update (no delete) | Read / Create / Update (no delete) | Read / Create / Update (no delete) | read own |
+| **viewer** | Read-only | Read-only | Read-only | read own |
 
-## Learn More
+Enforcement is layered (defense in depth), never UI-only:
 
-To learn more about Next.js, take a look at the following resources:
+1. **RLS (source of truth)** — every table query is filtered by `user_role()`.
+   DELETE is admin-only via policy; INSERT/UPDATE require admin or technician;
+   profiles updates require admin. This holds even if someone bypasses the UI.
+2. **Proxy middleware** (`proxy.ts`, Next 16's renamed middleware) — refreshes the
+   Supabase session on every request, redirects unauthenticated users to `/login`,
+   and server-side redirects non-admins away from `/admin/*`.
+3. **Client guards** — `<ProtectRole allowedRoles={['admin', 'technician']}>
+   ...</ProtectRole>` wraps every mutation form; delete buttons render only for
+   admins; viewers see a "Read-only access" notice instead of edit/create forms.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Where to find things
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `supabase/schema.sql`, `supabase/schema-rbac.sql` — schema + security policies
+- `lib/supabase/middleware.ts` — session refresh + `/admin` role guard
+- `lib/queries.ts` — typed data layer (assets, ports, cables, logs, profiles)
+- `app/contexts/AuthContext.tsx` — session provider, `useUser()` / `usePermissions()`
+- `app/components/ProtectRole.tsx` — role guards and read-only notices
+- `app/admin/users/page.tsx` — admin role management
 
-## Deploy on Vercel
+## Routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Route          | Access            | Description                                  |
+| -------------- | ----------------- | -------------------------------------------- |
+| `/`            | any authenticated | Dashboard, asset list & stat cards           |
+| `/connections` | any authenticated | Port-to-port cable mapping                   |
+| `/maintenance` | any authenticated | Maintenance log history                      |
+| `/admin/users` | admin only        | User role management                         |
+| `/login`, `/signup` | public        | Authentication                               |
+| `/forgot-password` | public        | Request a password reset email               |
+| `/update-password` | public        | Set a new password from the recovery link    |

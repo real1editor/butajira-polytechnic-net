@@ -16,6 +16,24 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+-- Publish profile changes via Realtime so logged-in users pick up a
+-- role change (admin promotes them) immediately, without re-login.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public' and tablename = 'profiles'
+    ) then
+      alter publication supabase_realtime add table public.profiles;
+    end if;
+  end if;
+exception
+  when others then
+    null;
+end $$;
+
 -- ============================================================
 -- HELPER: user_role()
 -- Returns the caller's role from profiles, or 'viewer' if none.

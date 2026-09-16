@@ -93,6 +93,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(p);
   }, [user]);
 
+  // Live role sync: when an admin changes this user's role, the new role
+  // applies without a re-login. Safe no-op if Realtime is not enabled.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`profile-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${userId}`,
+        },
+        () => {
+          fetchProfile(userId).then(setProfile);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const signIn = useCallback(
     async (email: string, password: string): Promise<string | null> => {
       const { error } = await supabase.auth.signInWithPassword({
@@ -101,7 +128,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) return error.message;
       router.refresh();
-      router.push("/");
       return null;
     },
     [router]
