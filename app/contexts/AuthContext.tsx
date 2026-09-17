@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { toUserMessage } from "@/lib/errors";
 
 export type UserRole = "admin" | "technician" | "viewer";
 
@@ -44,13 +45,17 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, role, display_name, created_at")
-    .eq("id", userId)
-    .single();
-  if (error || !data) return null;
-  return data as Profile;
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, role, display_name, created_at")
+      .eq("id", userId)
+      .single();
+    if (error || !data) return null;
+    return data as Profile;
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -126,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
       });
-      if (error) return error.message;
+      if (error) return toUserMessage(error);
       router.refresh();
       return null;
     },

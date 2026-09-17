@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { signupSchema, zodMessage } from "@/lib/validation";
+import { toUserMessage } from "@/lib/errors";
 
 const inputClass =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
@@ -22,27 +24,24 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Passwords do not match.");
+    const parsed = signupSchema.safeParse({ display_name: displayName, email, password, confirm });
+    if (!parsed.success) {
+      setError(zodMessage(parsed.error));
       return;
     }
 
     setBusy(true);
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
+      email: parsed.data.email,
+      password: parsed.data.password,
       options: {
-        data: { display_name: displayName.trim() },
+        data: { display_name: parsed.data.display_name },
       },
     });
     setBusy(false);
 
     if (signUpError) {
-      setError(signUpError.message);
+      setError(toUserMessage(signUpError));
       return;
     }
 

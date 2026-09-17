@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { credentialsSchema, zodMessage } from "@/lib/validation";
 
 const inputClass =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
@@ -25,7 +26,13 @@ function LoginForm() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const err = await signIn(email.trim(), password);
+    const parsed = credentialsSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      setError(zodMessage(parsed.error));
+      setBusy(false);
+      return;
+    }
+    const err = await signIn(parsed.data.email, parsed.data.password);
     if (err) {
       setError(err);
       setBusy(false);

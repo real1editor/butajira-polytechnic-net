@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { credentialsSchema, zodMessage } from "@/lib/validation";
+import { toUserMessage } from "@/lib/errors";
 
 const inputClass =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
@@ -16,18 +18,25 @@ export default function ForgotPasswordPage() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    const parsed = credentialsSchema.shape.email.safeParse(email);
+    if (!parsed.success) {
+      setError(zodMessage(parsed.error));
+      return;
+    }
+
     setBusy(true);
 
     const redirectTo = `${window.location.origin}/update-password`;
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email.trim(),
+      parsed.data,
       { redirectTo }
     );
 
     setBusy(false);
     if (resetError) {
-      setError(resetError.message);
+      setError(toUserMessage(resetError));
       return;
     }
 

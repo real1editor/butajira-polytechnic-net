@@ -111,3 +111,36 @@ export const credentialsSchema = z.object({
     .min(6, "Password must be at least 6 characters long")
     .max(72, "Password cannot exceed 72 characters"),
 });
+
+export const signupSchema = z
+  .object({
+    display_name: z
+      .string()
+      .trim()
+      .max(80, "Display name cannot exceed 80 characters")
+      .optional()
+      .transform((v) => v || null),
+    email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+    password: z
+      .string()
+      .min(6, "Password must be at least 6 characters long")
+      .max(72, "Password cannot exceed 72 characters"),
+    confirm: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((v) => v.password === v.confirm, {
+    message: "Passwords do not match.",
+    path: ["confirm"],
+  });
+
+export const passwordResetSchema = z
+  .object({
+    password: z
+      .string()
+      .min(6, "Password must be at least 6 characters long")
+      .max(72, "Password cannot exceed 72 characters"),
+    confirm: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((v) => v.password === v.confirm, {
+    message: "Passwords do not match.",
+    path: ["confirm"],
+  });
