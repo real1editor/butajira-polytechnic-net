@@ -6,20 +6,23 @@ import {
   Asset,
   AssetStatus,
   AssetType,
+  MaintenanceJoined,
+  OUTCOME_STYLES,
   Stats,
   STATUS_STYLES,
   TYPE_LABELS,
   deleteAsset,
   fetchAssets,
+  fetchRecentMaintenance,
   fetchStats,
   insertAsset,
   updateAsset,
 } from "@/lib/queries";
 import { usePermissions } from "@/app/contexts/AuthContext";
+import { useToast } from "@/app/contexts/ToastContext";
 import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import Modal from "@/app/components/Modal";
-import Toast from "@/app/components/Toast";
 
 const INITIAL_FORM = {
   name: "",
@@ -41,31 +44,48 @@ type StatCard = {
 
 export default function Home() {
   const { canEdit, canDelete } = usePermissions();
+  const { success } = useToast();
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [recentMaintenance, setRecentMaintenance] = useState<MaintenanceJoined[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(INITIAL_FORM);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Asset | null>(null);
   const [deleting, setDeleting] = useState<Asset | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchAssets(), fetchStats()]).then(
-      ([assetRes, statsRes]) => {
+    Promise.all([fetchAssets(), fetchStats(), fetchRecentMaintenance()]).then(
+      ([assetRes, statsRes, maintRes]) => {
         if (assetRes.error) {
           setError(assetRes.error);
         } else {
           setAssets(assetRes.data ?? []);
         }
         setStats(statsRes);
+        setRecentMaintenance(maintRes.data ?? []);
         setLoading(false);
       }
     );
   }, []);
+
+  async function refreshData() {
+    const [assetRes, statsRes, maintRes] = await Promise.all([
+      fetchAssets(),
+      fetchStats(),
+      fetchRecentMaintenance(),
+    ]);
+    if (assetRes.error) {
+      setError(assetRes.error);
+    } else {
+      setAssets(assetRes.data ?? []);
+    }
+    setStats(statsRes);
+    setRecentMaintenance(maintRes.data ?? []);
+  }
 
   const filteredAssets = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -79,19 +99,6 @@ export default function Home() {
 
   function handleChange(field: keyof typeof INITIAL_FORM, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  async function refreshData() {
-    const [assetRes, statsRes] = await Promise.all([
-      fetchAssets(),
-      fetchStats(),
-    ]);
-    if (assetRes.error) {
-      setError(assetRes.error);
-    } else {
-      setAssets(assetRes.data ?? []);
-    }
-    setStats(statsRes);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -108,7 +115,7 @@ export default function Home() {
     }
 
     setForm(INITIAL_FORM);
-    setToast({ type: "success", message: "Asset added successfully." });
+    success("Asset added successfully.");
     await refreshData();
     setSaving(false);
   }
@@ -135,7 +142,7 @@ export default function Home() {
     }
 
     setEditing(null);
-    setToast({ type: "success", message: "Asset updated successfully." });
+    success("Asset updated successfully.");
     await refreshData();
     setSaving(false);
   }
@@ -154,7 +161,7 @@ export default function Home() {
     }
 
     setDeleting(null);
-    setToast({ type: "success", message: "Asset deleted." });
+    success("Asset deleted.");
     await refreshData();
     setSaving(false);
   }
@@ -167,15 +174,61 @@ export default function Home() {
     { label: "Maintenance Logs", value: stats?.maintenanceLogs ?? 0, tint: "bg-red-500" },
   ];
 
+  const statusBreakdown = useMemo(() => {
+    const counts = new Map<AssetStatus, number>();
+    for (const asset of assets) {
+      counts.set(asset.status, (counts.get(asset.status) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([status, count]) => ({
+        status,
+        count,
+        pct: assets.length ? Math.round((count / assets.length) * 100) : 0,
+      }));
+  }, [assets]);
+
+  const typeBreakdown = useMemo(() => {
+    const counts = new Map<AssetType, number>();
+    for (const asset of assets) {
+      counts.set(asset.type, (counts.get(asset.type) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, count]) => ({
+        type,
+        count,
+        pct: assets.length ? Math.round((count / assets.length) * 100) : 0,
+      }));
+  }, [assets]);
+
+  const statusBarTint: Record<AssetStatus, string> = {
+    active: "bg-green-500",
+    maintenance: "bg-amber-500",
+    offline: "bg-red-500",
+    decommissioned: "bg-zinc-400",
+  };
+
+  const TYPE_TINT: Record<AssetType, string> = {
+    switch: "bg-blue-500",
+    router: "bg-violet-500",
+    patch_panel: "bg-teal-500",
+  };
+
+  const formatLogDate = (iso: string) => {
+    try {
+      return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return iso;
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
       {deleting && (
         <ConfirmDialog
           open={!!deleting}
@@ -321,6 +374,116 @@ export default function Home() {
             </div>
           ))}
         </section>
+
+        {!loading && assets.length > 0 && (
+          <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 sm:mb-8">
+            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                Assets by Status
+              </h2>
+              {statusBreakdown.length === 0 ? (
+                <p className="mt-3 text-sm text-zinc-500">No data.</p>
+              ) : (
+                <ul className="mt-3 space-y-2.5">
+                  {statusBreakdown.map(({ status, count, pct }) => (
+                    <li key={status} className="text-sm">
+                      <div className="flex items-center justify-between gap-2 text-zinc-600 dark:text-zinc-300">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={`h-2 w-2 rounded-full ${statusBarTint[status]}`}
+                          />
+                          <span className="capitalize">{status}</span>
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {count} · {pct}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                        <div
+                          className={`h-full rounded-full ${statusBarTint[status]}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                Assets by Type
+              </h2>
+              {typeBreakdown.length === 0 ? (
+                <p className="mt-3 text-sm text-zinc-500">No data.</p>
+              ) : (
+                <ul className="mt-3 space-y-2.5">
+                  {typeBreakdown.map(({ type, count, pct }) => (
+                    <li key={type} className="text-sm">
+                      <div className="flex items-center justify-between gap-2 text-zinc-600 dark:text-zinc-300">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={`h-2 w-2 rounded-full ${TYPE_TINT[type]}`}
+                          />
+                          {TYPE_LABELS[type]}
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {count} · {pct}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                        <div
+                          className={`h-full rounded-full ${TYPE_TINT[type]}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                  Recent Maintenance
+                </h2>
+                <Link
+                  href="/maintenance"
+                  className="text-xs font-medium text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline dark:hover:text-zinc-100"
+                >
+                  View all →
+                </Link>
+              </div>
+              {recentMaintenance.length === 0 ? (
+                <p className="mt-3 text-sm text-zinc-500">No records yet.</p>
+              ) : (
+                <ul className="mt-3 space-y-2.5">
+                  {recentMaintenance.map((log) => (
+                    <li
+                      key={log.id}
+                      className="flex items-start justify-between gap-2 text-sm"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-zinc-700 dark:text-zinc-200">
+                          {log.title}
+                        </p>
+                        <p className="truncate text-xs text-zinc-500">
+                          {log.assets.name} · {formatLogDate(log.log_date)}
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize ${OUTCOME_STYLES[log.outcome]}`}
+                      >
+                        {log.outcome}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        )}
 
         <ProtectRole
           allowedRoles={["admin", "technician"]}

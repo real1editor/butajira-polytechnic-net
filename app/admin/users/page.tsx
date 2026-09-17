@@ -8,8 +8,8 @@ import {
   updateUserRole,
 } from "@/lib/queries";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useToast } from "@/app/contexts/ToastContext";
 import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
-import Toast from "@/app/components/Toast";
 
 const ROLE_OPTIONS = ["admin", "technician", "viewer"] as const;
 
@@ -38,14 +38,11 @@ const formatDate = (iso: string) => {
 
 export default function UsersAdminPage() {
   const { user } = useAuth();
+  const { success, error: errorToast } = useToast();
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
 
   useEffect(() => {
     fetchProfiles().then((res) => {
@@ -61,25 +58,17 @@ export default function UsersAdminPage() {
     const err = await updateUserRole(profileId, role);
     setSavingId(null);
     if (err) {
-      setToast({ type: "error", message: err });
+      errorToast(err);
       return;
     }
     setProfiles((prev) =>
       prev.map((p) => (p.id === profileId ? { ...p, role } : p))
     );
-    setToast({ type: "success", message: "Role updated." });
+    success("Role updated.");
   }
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
       <ProtectRole
         allowedRoles={["admin"]}
         fallback={

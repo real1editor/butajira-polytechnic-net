@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -163,6 +163,16 @@ export default function Header() {
   const { user, loading } = useAuth();
   const isAuthed = !!user;
 
+  // Close the mobile drawer with the Escape key.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileOpen]);
+
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
@@ -198,12 +208,22 @@ export default function Header() {
                 <Link
                   href="/admin/users"
                   className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    pathname.startsWith("/admin")
+                    pathname.startsWith("/admin/users")
                       ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                   }`}
                 >
                   Users
+                </Link>
+                <Link
+                  href="/admin/audit"
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    pathname.startsWith("/admin/audit")
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  }`}
+                >
+                  Audit
                 </Link>
               </ProtectRole>
             </nav>
@@ -281,12 +301,23 @@ export default function Header() {
                 href="/admin/users"
                 onClick={() => setMobileOpen(false)}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  pathname.startsWith("/admin")
+                  pathname.startsWith("/admin/users")
                     ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
                     : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                 }`}
               >
                 Users
+              </Link>
+              <Link
+                href="/admin/audit"
+                onClick={() => setMobileOpen(false)}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  pathname.startsWith("/admin/audit")
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                }`}
+              >
+                Audit
               </Link>
             </ProtectRole>
           </div>

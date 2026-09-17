@@ -16,25 +16,34 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const FOUC_SCRIPT = `(function(){try{var t=localStorage.getItem("bpc-theme");var dark=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(dark){document.documentElement.classList.add("dark");}}catch(e){}})();`;
+
 export const metadata: Metadata = {
-  title: "BPC Network Management",
+  title: {
+    default: "BPC Network Management",
+    template: "%s · BPC Network",
+  },
   description:
     "Network Asset & Cable Infrastructure Management System for Butajira Polytechnic College",
+  applicationName: "BPC Network Management",
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <Providers>
-          <Header />
-          {children}
-          <Footer />
-        </Providers>
-      </body>
-    </html>
+<html
+        lang="en"
+        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        suppressHydrationWarning
+      >
+        <body className="min-h-full flex flex-col">
+          <script dangerouslySetInnerHTML={{ __html: FOUC_SCRIPT }} />
+          <Providers>
+            <Header />
+            {children}
+            <Footer />
+          </Providers>
+        </body>
+      </html>
   );
 }

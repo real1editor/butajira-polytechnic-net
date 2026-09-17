@@ -14,10 +14,10 @@ import {
   fetchMaintenanceLogs,
   insertMaintenanceLog,
 } from "@/lib/queries";
-import { usePermissions } from "@/app/contexts/AuthContext";
+import { usePermissions, useAuth } from "@/app/contexts/AuthContext";
+import { useToast } from "@/app/contexts/ToastContext";
 import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
-import Toast from "@/app/components/Toast";
 
 const inputClass =
   "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
@@ -38,14 +38,17 @@ const formatDate = (iso: string) => {
 
 export default function MaintenancePage() {
   const { canManage, canDelete } = usePermissions();
+  const { profile, user } = useAuth();
+  const { success } = useToast();
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [logs, setLogs] = useState<MaintenanceJoined[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [deleting, setDeleting] = useState<MaintenanceJoined | null>(null);
+
+  const defaultPerformer = profile?.display_name ?? user?.email ?? "";
 
   const [form, setForm] = useState({
     asset_id: "",
@@ -54,10 +57,22 @@ export default function MaintenancePage() {
     log_date: today(),
     description: "",
     action_taken: "",
-    performed_by: "",
+    performed_by: defaultPerformer,
     cost: "",
     outcome: "completed" as MaintenanceOutcome,
   });
+
+  // Fill "Performed By" once the profile resolves, without clobbering a
+  // value the user has already typed. Adjusting state during render (rather
+  // than in an effect) keeps the form in sync with the async profile load.
+  const [prevPerformer, setPrevPerformer] = useState(defaultPerformer);
+  if (defaultPerformer !== prevPerformer) {
+    setPrevPerformer(defaultPerformer);
+    setForm((prev) => ({
+      ...prev,
+      performed_by: prev.performed_by || defaultPerformer,
+    }));
+  }
 
   useEffect(() => {
     Promise.all([fetchAssets(), fetchMaintenanceLogs()]).then(
@@ -124,7 +139,7 @@ export default function MaintenancePage() {
       cost: "",
       outcome: "completed",
     });
-    setToast({ type: "success", message: "Maintenance log saved." });
+    success("Maintenance log saved.");
     setSaving(false);
     refreshData();
   }
@@ -137,7 +152,7 @@ export default function MaintenancePage() {
     const deleteError = await deleteMaintenanceLog(deleting.id);
     if (deleteError) setError(deleteError);
     else {
-      setToast({ type: "success", message: "Log deleted." });
+      success("Log deleted.");
       await refreshData();
     }
 
@@ -147,13 +162,6 @@ export default function MaintenancePage() {
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
       {deleting && (
         <ConfirmDialog
           open={!!deleting}

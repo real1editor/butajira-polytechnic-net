@@ -1,5 +1,15 @@
+import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import type { UserRole } from "@/app/contexts/AuthContext";
+import {
+  CABLE_STATUSES,
+  assetSchema,
+  cableSchema,
+  maintenanceLogSchema,
+  portSchema,
+  roleSchema,
+  zodMessage,
+} from "@/lib/validation";
 
 export type UserProfile = {
   id: string;
@@ -81,6 +91,28 @@ export type Stats = {
   maintenanceLogs: number;
 };
 
+export type AuditLogAction = "INSERT" | "UPDATE" | "DELETE";
+export type AuditTableName =
+  | "assets"
+  | "ports"
+  | "cables"
+  | "maintenance_logs"
+  | "profiles";
+
+export type AuditLog = {
+  id: string;
+  table_name: AuditTableName;
+  record_id: string;
+  action: AuditLogAction;
+  changes: {
+    old?: Record<string, unknown>;
+    new?: Record<string, unknown>;
+  };
+  actor_id: string | null;
+  created_at: string;
+  actor_profiles?: { display_name: string | null } | null;
+};
+
 export type QueryResult<T> = { data: T[] | null; error: string | null };
 
 const message = (error: { message?: string } | null) => error?.message ?? null;
@@ -139,7 +171,10 @@ export async function updateAsset(
   if ("location" in payload) updates.location = payload.location?.trim() || null;
   if ("ip_address" in payload) updates.ip_address = payload.ip_address?.trim() || null;
 
-  const { error } = await supabase.from("assets").update(updates).eq("id", id);
+  const parsed = assetSchema.partial().safeParse(updates);
+  if (!parsed.success) return zodMessage(parsed.error);
+
+  const { error } = await supabase.from("assets").update(parsed.data).eq("id", id);
   return message(error);
 }
 
@@ -165,13 +200,16 @@ export async function insertAsset(
   payload: Pick<Asset, "name" | "type" | "status"> &
     Partial<Pick<Asset, "location" | "ip_address" | "asset_tag">>
 ): Promise<string | null> {
+  const parsed = assetSchema.safeParse(payload);
+  if (!parsed.success) return zodMessage(parsed.error);
+
   const { error } = await supabase.from("assets").insert({
-    name: payload.name.trim(),
-    type: payload.type,
-    asset_tag: payload.asset_tag?.trim() || defaultTag(),
-    location: payload.location?.trim() || null,
-    ip_address: payload.ip_address?.trim() || null,
-    status: payload.status,
+    name: parsed.data.name.trim(),
+    type: parsed.data.type,
+    asset_tag: parsed.data.asset_tag?.trim() || defaultTag(),
+    location: parsed.data.location?.trim() || null,
+    ip_address: parsed.data.ip_address ?? null,
+    status: parsed.data.status,
   });
   return message(error);
 }
@@ -189,9 +227,14 @@ export async function insertPort(
   port_number: string,
   port_type: PortType
 ): Promise<string | null> {
-  const { error } = await supabase
-    .from("ports")
-    .insert({ asset_id, port_number: port_number.trim(), port_type });
+  const parsed = portSchema.safeParse({ asset_id, port_number, port_type });
+  if (!parsed.success) return zodMessage(parsed.error);
+
+  const { error } = await supabase.from("ports").insert({
+    asset_id: parsed.data.asset_id,
+    port_number: parsed.data.port_number.trim(),
+    port_type: parsed.data.port_type,
+  });
   return message(error);
 }
 
@@ -212,7 +255,12 @@ export async function insertCable(payload: {
   endpoint_a_port_id: string;
   endpoint_b_port_id: string;
 }): Promise<string | null> {
-  const { error } = await supabase.from("cables").insert(payload);
+  const parsed = cableSchema.safeParse(payload);
+  if (!parsed.success) return zodMessage(parsed.error);
+
+  const { error } = await supabase
+    .from("cables")
+    .insert({ ...parsed.data, length_m: parsed.data.length_m ?? null });
   return message(error);
 }
 
@@ -220,6 +268,11 @@ export async function updateCableStatus(
   id: string,
   status: CableStatus
 ): Promise<string | null> {
+  const parsed = z
+    .enum(CABLE_STATUSES)
+    .safeParse(status);
+  if (!parsed.success) return zodMessage(parsed.error);
+
   const { error } = await supabase.from("cables").update({ status }).eq("id", id);
   return message(error);
 }
@@ -241,6 +294,18 @@ export async function fetchMaintenanceLogs(): Promise<QueryResult<MaintenanceJoi
   return { data: (data as MaintenanceJoined[] | null) ?? null, error: message(error) };
 }
 
+export async function fetchRecentMaintenance(
+  limit = 5
+): Promise<QueryResult<MaintenanceJoined>> {
+  const { data, error } = await supabase
+    .from("maintenance_logs")
+    .select("*, assets(id, name, type)")
+    .order("log_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return { data: (data as MaintenanceJoined[] | null) ?? null, error: message(error) };
+}
+
 export async function insertMaintenanceLog(payload: {
   asset_id: string;
   log_date: string;
@@ -252,16 +317,19 @@ export async function insertMaintenanceLog(payload: {
   cost: number | null;
   outcome: MaintenanceOutcome;
 }): Promise<string | null> {
+  const parsed = maintenanceLogSchema.safeParse(payload);
+  if (!parsed.success) return zodMessage(parsed.error);
+
   const { error } = await supabase.from("maintenance_logs").insert({
-    asset_id: payload.asset_id,
-    log_date: payload.log_date,
-    maintenance_type: payload.maintenance_type,
-    title: payload.title,
-    description: payload.description,
-    action_taken: payload.action_taken?.trim() || "No action recorded",
-    performed_by: payload.performed_by,
-    cost: payload.cost,
-    outcome: payload.outcome,
+    asset_id: parsed.data.asset_id,
+    log_date: parsed.data.log_date,
+    maintenance_type: parsed.data.maintenance_type,
+    title: parsed.data.title,
+    description: parsed.data.description,
+    action_taken: parsed.data.action_taken?.trim() || "No action recorded",
+    performed_by: parsed.data.performed_by,
+    cost: parsed.data.cost ?? null,
+    outcome: parsed.data.outcome,
   });
   return message(error);
 }
@@ -278,6 +346,9 @@ export async function updateUserRole(
   id: string,
   role: UserRole
 ): Promise<string | null> {
+  const parsed = roleSchema.safeParse({ role });
+  if (!parsed.success) return zodMessage(parsed.error);
+
   const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
   return message(error);
 }
@@ -307,4 +378,13 @@ export async function fetchStats(): Promise<Stats> {
     activeCables: activeCables.count ?? 0,
     maintenanceLogs: maintenanceLogs.count ?? 0,
   };
+}
+
+export async function fetchAuditLogs(limit = 200): Promise<QueryResult<AuditLog>> {
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("*, actor_profiles:profiles!audit_logs_actor_id_fkey(display_name)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return { data: (data as AuditLog[] | null) ?? null, error: message(error) };
 }

@@ -47,10 +47,16 @@ Apply the SQL files **in order** from the Supabase SQL Editor (or `supabase db p
 | 1     | `reset.sql`     | Optional — wipes all data for a clean slate                    |
 | 2     | `schema.sql`    | Core tables (`assets`, `ports`, `cables`, `maintenance_logs`), auto-port trigger, full-text search-friendly design. Enables RLS (deny-by-default) |
 | 3     | `schema-rbac.sql` | `profiles` table, Auth signup trigger, role-based RLS policies, grants, Realtime |
+| 4     | `schema-audit.sql` | Audit logging (`audit_logs` + triggers), optimization indexes, port-exclusivity invariant, `v_asset_summary` RLS hardening |
 
 `schema-rbac.sql` is idempotent and can also be re-run on an existing install to
 upgrade from the legacy open (anon) policies. A **backfill** statement is included
 for users who signed up before this migration was applied.
+
+`schema-audit.sql` is also idempotent. Run it once after `schema-rbac.sql` to
+record an immutable audit trail of every mutation and add the search/join
+indexes. It closes an RLS gap: `v_asset_summary` is switched to
+`security invoker` so it can never bypass RLS, and `anon` loses SELECT on it.
 
 ### Promoting your first admin
 
@@ -92,20 +98,42 @@ Enforcement is layered (defense in depth), never UI-only:
 ### Where to find things
 
 - `supabase/schema.sql`, `supabase/schema-rbac.sql` — schema + security policies
+- `supabase/schema-audit.sql` — audit trail, indexes, port-exclusivity, view hardening
 - `lib/supabase/middleware.ts` — session refresh + `/admin` role guard
-- `lib/queries.ts` — typed data layer (assets, ports, cables, logs, profiles)
+- `lib/queries.ts` — typed data layer (assets, ports, cables, logs, profiles, audit)
+- `lib/validation.ts` — Zod schemas; every mutation is validated before hitting the DB
 - `app/contexts/AuthContext.tsx` — session provider, `useUser()` / `usePermissions()`
+- `app/contexts/ToastContext.tsx` — global toast system (`useToast()`)
 - `app/components/ProtectRole.tsx` — role guards and read-only notices
 - `app/admin/users/page.tsx` — admin role management
+- `app/admin/audit/page.tsx` — admin-only audit trail viewer
+
+## Audit Logging
+
+Every `INSERT` / `UPDATE` / `DELETE` on `assets`, `ports`, `cables`,
+`maintenance_logs`, and `profiles` is captured automatically by a database
+trigger into `public.audit_logs` with the actor id, table, action, record id,
+and the changed row (before/after) as JSONB.
+
+- RLS: only `admin` can read `audit_logs`; there is **no write policy** and the
+  table is **not** published to Realtime.
+- Surfaced in-app under **Users → Audit** or **Audit** in the nav for admins.
+
+## Validation
+
+All mutation payloads in `lib/queries.ts` are validated with Zod (`lib/validation.ts`)
+before any network call, so malformed input never reaches the API. Forms get a
+human-readable message back and users see it immediately.
 
 ## Routes
 
 | Route          | Access            | Description                                  |
 | -------------- | ----------------- | -------------------------------------------- |
-| `/`            | any authenticated | Dashboard, asset list & stat cards           |
+| `/`            | any authenticated | Dashboard, asset list, stat cards & analytics|
 | `/connections` | any authenticated | Port-to-port cable mapping                   |
 | `/maintenance` | any authenticated | Maintenance log history                      |
 | `/admin/users` | admin only        | User role management                         |
+| `/admin/audit` | admin only        | Immutable audit trail of all mutations       |
 | `/login`, `/signup` | public        | Authentication                               |
 | `/forgot-password` | public        | Request a password reset email               |
 | `/update-password` | public        | Set a new password from the recovery link    |
