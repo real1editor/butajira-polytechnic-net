@@ -149,6 +149,39 @@ exception
     raise notice 'Skipped endpoint_b exclusivity index: duplicate active cables exist on a shared port.';
 end $$;
 
+-- IMPORTANT: the two unique indexes above are enforced PER ENDPOINT COLUMN,
+-- which leaves a hole — a port could be used as endpoint_a in one cable and
+-- as endpoint_b in another, and "mirrored" cables (A→B plus B→A) would both
+-- insert. This trigger closes that gap by rejecting any active/planned cable
+-- that reuses a port which already appears in a different cable (either side).
+-- Kept alongside the indexes as defense-in-depth for lifted legacy datasets.
+create or replace function public.cable_port_exclusive()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if exists (
+    select 1
+    from public.cables
+    where status <> 'decommissioned'
+      and id <> new.id
+      and (
+        new.endpoint_a_port_id in (endpoint_a_port_id, endpoint_b_port_id)
+        or new.endpoint_b_port_id in (endpoint_a_port_id, endpoint_b_port_id)
+      )
+  ) then
+    raise exception 'Each port can only be used by one active or planned cable.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_cables_port_exclusive on public.cables;
+create trigger trg_cables_port_exclusive
+  before insert or update on public.cables
+  for each row execute function public.cable_port_exclusive();
+
 -- ============================================================
 -- CLOSE THE v_asset_summary RLS BYPASS
 -- Views execute as their owner (the superuser/service role) by default,

@@ -23,6 +23,9 @@ import { useToast } from "@/app/contexts/ToastContext";
 import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import Modal from "@/app/components/Modal";
+import ErrorBanner from "@/app/components/ErrorBanner";
+import { inputClass } from "@/lib/ui";
+import { formatDate } from "@/lib/utils";
 
 const INITIAL_FORM = {
   name: "",
@@ -32,9 +35,6 @@ const INITIAL_FORM = {
   ip_address: "",
   status: "active" as AssetStatus,
 };
-
-const inputClass =
-  "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
 
 type StatCard = {
   label: string;
@@ -213,18 +213,6 @@ export default function Home() {
     switch: "bg-blue-500",
     router: "bg-violet-500",
     patch_panel: "bg-teal-500",
-  };
-
-  const formatLogDate = (iso: string) => {
-    try {
-      return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    } catch {
-      return iso;
-    }
   };
 
   return (
@@ -469,7 +457,7 @@ export default function Home() {
                           {log.title}
                         </p>
                         <p className="truncate text-xs text-zinc-500">
-                          {log.assets.name} · {formatLogDate(log.log_date)}
+                          {log.assets.name} · {formatDate(log.log_date)}
                         </p>
                       </div>
                       <span
@@ -582,31 +570,7 @@ export default function Home() {
           </section>
         </ProtectRole>
 
-        {error && (
-          <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
-            <span>{error}</span>
-            <button
-              type="button"
-              onClick={() => setError(null)}
-              aria-label="Dismiss error"
-              className="shrink-0 rounded p-0.5 text-red-400 transition-colors hover:text-red-700"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        )}
+        {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
         <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-zinc-800">

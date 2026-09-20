@@ -10,6 +10,9 @@ import {
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useToast } from "@/app/contexts/ToastContext";
 import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
+import ErrorBanner from "@/app/components/ErrorBanner";
+import { inputClass } from "@/lib/ui";
+import { formatDateTime } from "@/lib/utils";
 
 const ROLE_OPTIONS = ["admin", "technician", "viewer"] as const;
 
@@ -19,21 +22,6 @@ const ROLE_BADGE: Record<string, string> = {
     "bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-300",
   viewer:
     "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
-};
-
-const inputClass =
-  "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
-
-const formatDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
 };
 
 export default function UsersAdminPage() {
@@ -97,31 +85,7 @@ export default function UsersAdminPage() {
             </p>
           </header>
 
-          {error && (
-            <div className="mb-6 flex items-center justify-between gap-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
-              <span>{error}</span>
-              <button
-                type="button"
-                onClick={() => setError(null)}
-                aria-label="Dismiss error"
-                className="shrink-0 rounded p-0.5 text-red-400 transition-colors hover:text-red-700"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          )}
+          {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
           <section className="rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-800">
@@ -184,7 +148,7 @@ export default function UsersAdminPage() {
                             </span>
                           </td>
                           <td className="hidden px-4 py-3 text-zinc-600 md:table-cell md:px-6 dark:text-zinc-400">
-                            {formatDate(p.created_at)}
+                            {formatDateTime(p.created_at)}
                           </td>
                           <td className="px-4 py-3 sm:px-6">
                             <div className="flex items-center justify-end gap-2">

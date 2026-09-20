@@ -222,7 +222,7 @@ export async function fetchAssets(): Promise<QueryResult<Asset>> {
 
 const defaultTag = () =>
   `BPC-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(
-    Math.random() * 900 + 100
+    Math.random() * 9000 + 1000
   )}`;
 
 export async function insertAsset(
@@ -351,7 +351,7 @@ export async function insertMaintenanceLog(payload: {
       maintenance_type: parsed.data.maintenance_type,
       title: parsed.data.title,
       description: parsed.data.description,
-      action_taken: parsed.data.action_taken?.trim() || "No action recorded",
+      action_taken: parsed.data.action_taken?.trim() || "",
       performed_by: parsed.data.performed_by,
       cost: parsed.data.cost ?? null,
       outcome: parsed.data.outcome,

@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { signupSchema, zodMessage } from "@/lib/validation";
 import { toUserMessage } from "@/lib/errors";
-
-const inputClass =
-  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-700";
+import { inputClass } from "@/lib/ui";
 
 export default function SignupPage() {
   const router = useRouter();

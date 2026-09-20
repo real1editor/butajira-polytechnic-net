@@ -8,13 +8,18 @@
 -- ============================================================
 create table if not exists public.profiles (
   id           uuid primary key references auth.users(id) on delete cascade,
-  role         text not null default 'technician'
+  role         text not null default 'viewer'
                check (role in ('admin', 'technician', 'viewer')),
   display_name text,
   created_at   timestamptz not null default now()
 );
 
 alter table public.profiles enable row level security;
+
+-- Reconcile the column default with the signup trigger (both 'viewer'). The
+-- trigger always overrides it, but keep the DDL as the single source of truth
+-- for tables created before this was aligned.
+alter table public.profiles alter column role set default 'viewer';
 
 -- Publish profile changes via Realtime so logged-in users pick up a
 -- role change (admin promotes them) immediately, without re-login.
