@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import ProtectRole from "@/app/components/ProtectRole";
+import Image from "next/image";
 
 const LINKS = [
   { href: "/", label: "Dashboard" },
@@ -177,7 +178,14 @@ export default function Header() {
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+          <Image
+            src="/company-logo.png"
+            alt="Company logo"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded object-contain"
+            priority
+          />
           <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-white">
             BPC Network Management
           </span>
