@@ -17,6 +17,8 @@ const GLYPHS = {
   dashboard: "M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z",
   connections:
     "M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244",
+  topology:
+    "M12 3v4m0 0a3 3 0 100 6 3 3 0 000-6zM5 21v-4m0 0a3 3 0 100-6 3 3 0 000 6zm14 4v-4m0 0a3 3 0 100-6 3 3 0 000 6zM9 10l-3 4m9-4l3 4",
   maintenance:
     "M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.4-.6-.6-2.4 2.4-2.4z",
   users:
@@ -157,6 +159,15 @@ export default function CommandPalette() {
         glyph: "dashboard",
         keywords: "home assets stats",
         run: () => goto("/"),
+      },
+      {
+        id: "page-topology",
+        label: "Network topology",
+        hint: "Interactive physical map",
+        group: "Pages",
+        glyph: "topology",
+        keywords: "graph map visual diagram links nodes",
+        run: () => goto("/topology"),
       },
       {
         id: "page-connections",

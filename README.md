@@ -130,6 +130,7 @@ human-readable message back and users see it immediately.
 | Route          | Access            | Description                                  |
 | -------------- | ----------------- | -------------------------------------------- |
 | `/`            | any authenticated | Dashboard, asset list, stat cards & analytics|
+| `/topology`    | any authenticated | Interactive force-directed network topology  |
 | `/connections` | any authenticated | Port-to-port cable mapping                   |
 | `/maintenance` | any authenticated | Maintenance log history                      |
 | `/admin/users` | admin only        | User role management                         |

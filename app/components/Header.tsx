@@ -10,6 +10,7 @@ import Image from "next/image";
 
 const LINKS = [
   { href: "/", label: "Dashboard" },
+  { href: "/topology", label: "Topology" },
   { href: "/connections", label: "Connections" },
   { href: "/maintenance", label: "Maintenance" },
 ];
