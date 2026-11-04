@@ -237,6 +237,31 @@ export default function Header() {
             </nav>
           )}
 
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("bpc:open-command"))}
+            aria-label="Open command palette"
+            className="flex items-center gap-2 rounded-md border border-zinc-200 bg-white/70 px-2 py-1.5 text-sm font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-100"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
+              />
+            </svg>
+            <span className="hidden lg:inline">Search</span>
+            <kbd className="hidden rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-400 lg:inline dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-500">
+              Ctrl K
+            </kbd>
+          </button>
+
           <ThemeToggle />
           {!loading && <UserMenu />}
 

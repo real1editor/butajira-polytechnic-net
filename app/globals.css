@@ -40,3 +40,183 @@ body {
   background-color: rgb(228 228 231 / 0.9);
   color: #0a0a0a;
 }
+
+/* --------------------------------------------------------------------------
+   Signature motion system — shared by the brand panel, dashboard visuals and
+   the command palette. Everything degrades gracefully for reduced motion.
+   -------------------------------------------------------------------------- */
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(8%, 6%, 0) scale(1.15);
+  }
+  100% {
+    transform: translate3d(-4%, 2%, 0) scale(1.05);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes spark-grow {
+  from {
+    transform: scaleY(0.15);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.animate-aurora {
+  animation: aurora-drift 22s ease-in-out infinite alternate;
+}
+
+.animate-aurora-slow {
+  animation: aurora-drift 32s ease-in-out infinite alternate-reverse;
+}
+
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+.animate-dash-flow {
+  stroke-dasharray: 6 10;
+  animation: dash-flow 9s linear infinite;
+}
+
+.animate-spark {
+  transform-origin: bottom;
+  animation: spark-grow 0.7s ease-out both;
+}
+
+.animate-palette-in {
+  animation: palette-in 0.18s ease-out both;
+}
+
+.animate-backdrop-in {
+  animation: backdrop-in 0.18s ease-out both;
+}
+
+.live-dot {
+  position: relative;
+}
+
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pulse-ring 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.brand-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 78%);
+}
+
+.shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.12) 45%,
+    transparent 70%
+  );
+  animation: shimmer-sweep 3.8s ease-in-out infinite;
+}
+
+.cmd-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(161 161 170 / 0.5) transparent;
+}
+
+.cmd-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cmd-scroll::-webkit-scrollbar-thumb {
+  background-color: rgb(161 161 170 / 0.5);
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-aurora,
+  .animate-aurora-slow,
+  .animate-float-slow,
+  .animate-dash-flow,
+  .animate-spark,
+  .animate-palette-in,
+  .animate-backdrop-in,
+  .live-dot::after,
+  .shimmer::before {
+    animation: none !important;
+  }
+}

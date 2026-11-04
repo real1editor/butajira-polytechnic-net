@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Asset,
   AssetStatus,
@@ -24,6 +25,8 @@ import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import Modal from "@/app/components/Modal";
 import ErrorBanner from "@/app/components/ErrorBanner";
+import StatCard, { type StatIcon } from "@/app/components/StatCard";
+import NetworkPulse from "@/app/components/NetworkPulse";
 import { inputClass } from "@/lib/ui";
 import { formatDate } from "@/lib/utils";
 
@@ -36,14 +39,9 @@ const INITIAL_FORM = {
   status: "active" as AssetStatus,
 };
 
-type StatCard = {
-  label: string;
-  value: number;
-  tint: string;
-};
-
-export default function Home() {
+function Home() {
   const { canEdit, canDelete } = usePermissions();
+  const searchParams = useSearchParams();
   const { success } = useToast();
 
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -53,9 +51,18 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(INITIAL_FORM);
-  const [search, setSearch] = useState("");
+  const paramQuery = searchParams.get("q") ?? "";
+  const [search, setSearch] = useState(paramQuery);
+  const [lastParamQuery, setLastParamQuery] = useState(paramQuery);
   const [editing, setEditing] = useState<Asset | null>(null);
   const [deleting, setDeleting] = useState<Asset | null>(null);
+
+  // Keep the local search box in sync when arriving from the command palette
+  // (?q=…), while letting the user keep typing without it being overwritten.
+  if (paramQuery !== lastParamQuery) {
+    setLastParamQuery(paramQuery);
+    setSearch(paramQuery);
+  }
 
   useEffect(() => {
     Promise.all([fetchAssets(), fetchStats(), fetchRecentMaintenance()]).then(
@@ -166,12 +173,53 @@ export default function Home() {
     setSaving(false);
   }
 
-  const statCards: StatCard[] = [
-    { label: "Total Assets", value: stats?.assets ?? 0, tint: "bg-zinc-900 dark:bg-zinc-100" },
-    { label: "Active Assets", value: stats?.activeAssets ?? 0, tint: "bg-green-500" },
-    { label: "Total Ports", value: stats?.ports ?? 0, tint: "bg-blue-500" },
-    { label: "Active Cables", value: stats?.activeCables ?? 0, tint: "bg-amber-500" },
-    { label: "Maintenance Logs", value: stats?.maintenanceLogs ?? 0, tint: "bg-red-500" },
+  const statCards: {
+    label: string;
+    value: number;
+    icon: StatIcon;
+    accent: string;
+    bar: string;
+    live?: boolean;
+  }[] = [
+    {
+      label: "Total Assets",
+      value: stats?.assets ?? 0,
+      icon: "assets",
+      accent: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
+      bar: "bg-blue-500",
+    },
+    {
+      label: "Active Assets",
+      value: stats?.activeAssets ?? 0,
+      icon: "active",
+      accent:
+        "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
+      bar: "bg-emerald-500",
+      live: true,
+    },
+    {
+      label: "Total Ports",
+      value: stats?.ports ?? 0,
+      icon: "ports",
+      accent:
+        "bg-violet-500/10 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
+      bar: "bg-violet-500",
+    },
+    {
+      label: "Active Cables",
+      value: stats?.activeCables ?? 0,
+      icon: "cables",
+      accent:
+        "bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
+      bar: "bg-amber-500",
+    },
+    {
+      label: "Maintenance Logs",
+      value: stats?.maintenanceLogs ?? 0,
+      icon: "logs",
+      accent: "bg-rose-500/10 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400",
+      bar: "bg-rose-500",
+    },
   ];
 
   const statusBreakdown = useMemo(() => {
@@ -341,25 +389,43 @@ export default function Home() {
       </Modal>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <header className="mb-6 sm:mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Butajira Polytechnic College
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
-            Network Asset & Cable Infrastructure Management Dashboard
-          </p>
+        <header className="relative mb-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:mb-8 sm:p-8 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-500/15" />
+            <div className="absolute -bottom-24 left-1/4 h-56 w-56 rounded-full bg-blue-400/10 blur-3xl dark:bg-blue-500/15" />
+          </div>
+          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <span className="live-dot inline-flex h-1.5 w-1.5 rounded-full text-emerald-500" />
+                Network Operations Center
+              </span>
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                Butajira Polytechnic College
+              </h1>
+              <p className="mt-1 max-w-xl text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
+                Network Asset &amp; Cable Infrastructure Management Dashboard
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-medium">
+                {["RBAC enforced", "Realtime sync", "Full audit trail"].map(
+                  (chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400"
+                    >
+                      {chip}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+            <NetworkPulse className="hidden h-40 w-64 shrink-0 sm:block" />
+          </div>
         </header>
 
         <section className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
           {statCards.map((card) => (
-            <div
-              key={card.label}
-              className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <div className={`mb-3 h-1.5 w-8 rounded-full ${card.tint}`} />
-              <p className="text-xl font-semibold sm:text-2xl">{card.value}</p>
-              <p className="mt-0.5 text-xs text-zinc-500 sm:text-sm">{card.label}</p>
-            </div>
+            <StatCard key={card.label} {...card} />
           ))}
         </section>
 
@@ -647,8 +713,11 @@ export default function Home() {
                       </td>
                       <td className="px-4 py-3 sm:px-6">
                         <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[asset.status]}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[asset.status]}`}
                         >
+                          {asset.status === "active" && (
+                            <span className="live-dot inline-flex h-1.5 w-1.5 rounded-full text-green-600" />
+                          )}
                           {asset.status}
                         </span>
                       </td>
@@ -683,5 +752,13 @@ export default function Home() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <Home />
+    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
+import AuthShell from "@/app/components/AuthShell";
 import { credentialsSchema, zodMessage } from "@/lib/validation";
 import { inputClass } from "@/lib/ui";
 
@@ -40,22 +41,20 @@ function LoginForm() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 font-sans dark:bg-zinc-950">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <span className="mb-3 inline-flex h-3 w-3 rounded-full bg-green-500" />
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">
-            Butajira Polytechnic College
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Network Asset & Cable Infrastructure Management
+    <AuthShell>
+      <div className="rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-xl shadow-zinc-900/5 backdrop-blur sm:p-8 dark:border-zinc-800 dark:bg-zinc-900/90">
+        <div className="mb-6">
+          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <span className="live-dot inline-flex h-1.5 w-1.5 rounded-full text-emerald-500" />
+            Secure console
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">
+            Welcome back
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Sign in to access the network operations dashboard.
           </p>
         </div>
-
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-4 text-lg font-medium text-zinc-900 dark:text-white">
-            Sign in
-          </h2>
 
           {error && (
             <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
@@ -124,8 +123,7 @@ function LoginForm() {
             Create one
           </Link>
         </p>
-      </div>
-    </main>
+    </AuthShell>
   );
 }
 

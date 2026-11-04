@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AuthShell from "@/app/components/AuthShell";
 import { passwordResetSchema, zodMessage } from "@/lib/validation";
 import { toUserMessage } from "@/lib/errors";
 import { inputClass } from "@/lib/ui";
@@ -100,19 +101,19 @@ export default function UpdatePasswordPage() {
   if (success) return null;
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 font-sans dark:bg-zinc-950">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <span className="mb-3 inline-flex h-3 w-3 rounded-full bg-green-500" />
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">
+    <AuthShell>
+      <div className="rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-xl shadow-zinc-900/5 backdrop-blur sm:p-8 dark:border-zinc-800 dark:bg-zinc-900/90">
+        <div className="mb-6">
+          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-300">
+            Secure reset
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">
             Set a new password
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Choose a strong password you haven’t used before.
           </p>
         </div>
-
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           {checking && (
             <div className="flex items-center justify-center gap-2 py-6 text-sm text-zinc-500 dark:text-zinc-400">
               <svg
@@ -220,8 +221,7 @@ export default function UpdatePasswordPage() {
               </button>
             </form>
           )}
-        </div>
       </div>
-    </main>
+    </AuthShell>
   );
 }
