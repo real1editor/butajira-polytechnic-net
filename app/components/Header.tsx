@@ -258,9 +258,7 @@ export default function Header() {
               />
             </svg>
             <span className="hidden lg:inline">Search</span>
-            <kbd className="hidden rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-400 lg:inline dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-500">
-              Ctrl K
-            </kbd>
+            
           </button>
 
           <ThemeToggle />
