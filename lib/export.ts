@@ -5,21 +5,9 @@ import {
   TYPE_LABELS,
 } from "@/lib/queries";
 import { formatDate, todayLocal } from "@/lib/utils";
+import { escapeCell, type CsvValue } from "@/lib/csv";
 
-export type CsvValue = string | number | boolean | null | undefined;
-
-function escapeCell(value: CsvValue): string {
-  if (value == null) return "";
-  let text = String(value);
-  // Neutralize spreadsheet formula injection for user-controlled strings.
-  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text)) {
-    text = `'${text}`;
-  }
-  if (/[",\r\n]/.test(text)) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-  return text;
-}
+export type { CsvValue };
 
 /** Triggers a browser download of a UTF-8 CSV (Excel friendly BOM included). */
 export function downloadCsv(
