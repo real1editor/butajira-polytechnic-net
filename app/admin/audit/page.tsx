@@ -28,14 +28,77 @@ const ACTION_STYLES: Record<AuditLogAction, string> = {
   DELETE: "bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-300",
 };
 
-function ChangeSummary({ log }: { log: AuditLog }) {
-  const oldData = log.changes?.old;
-  const newData = log.changes?.new;
+type ChangeData = {
+  old?: Record<string, unknown>;
+  new?: Record<string, unknown>;
+};
+
+const HIDDEN_DIFF_FIELDS = new Set(["id", "created_at", "updated_at"]);
+
+function readChanges(changes: unknown): ChangeData {
+  if (typeof changes === "string") {
+    try {
+      const parsed = JSON.parse(changes);
+      return parsed && typeof parsed === "object" ? (parsed as ChangeData) : {};
+    } catch {
+      return {};
+    }
+  }
+  return changes && typeof changes === "object" ? (changes as ChangeData) : {};
+}
+
+function rowLabel(row: Record<string, unknown> | undefined): string | null {
+  if (!row) return null;
+  for (const key of ["name", "display_name", "asset_tag", "email"]) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return null;
+}
+
+function changedFields(
+  oldData: Record<string, unknown>,
+  newData: Record<string, unknown>
+): string[] {
+  return [...new Set([...Object.keys(newData), ...Object.keys(oldData)])].filter(
+    (key) =>
+      !HIDDEN_DIFF_FIELDS.has(key) &&
+      JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])
+  );
+}
+
+function describeChange(log: AuditLog): string {
+  const { old: oldData = {}, new: newData = {} } = readChanges(log.changes);
 
   if (log.action === "INSERT") {
+    const label = rowLabel(newData);
+    return label ? `Created "${label}"` : "Row created";
+  }
+
+  if (log.action === "DELETE") {
+    const label = rowLabel(oldData);
+    return label ? `Deleted "${label}"` : "Row deleted";
+  }
+
+  const fields = changedFields(oldData, newData);
+  if (fields.length === 0) return "No field changes";
+  const preview = fields.slice(0, 3).join(", ");
+  return `${fields.length} field${fields.length === 1 ? "" : "s"} changed: ${preview}${
+    fields.length > 3 ? "…" : ""
+  }`;
+}
+
+function ChangeSummary({ log }: { log: AuditLog }) {
+  const { old: oldData = {}, new: newData = {} } = readChanges(log.changes);
+
+  if (log.action === "INSERT") {
+    const entries = Object.entries(newData);
     return (
       <div className="space-y-1">
-        {Object.entries(newData ?? {}).map(([key, value]) => (
+        {entries.length === 0 && (
+          <p className="text-xs text-zinc-500">No field data recorded.</p>
+        )}
+        {entries.map(([key, value]) => (
           <div key={key} className="flex justify-between gap-3 text-xs">
             <span className="text-zinc-500">{key}</span>
             <span className="truncate font-mono text-zinc-800 dark:text-zinc-200">
@@ -48,15 +111,7 @@ function ChangeSummary({ log }: { log: AuditLog }) {
   }
 
   if (log.action === "UPDATE") {
-    const changedKeys = new Set([
-      ...Object.keys(newData ?? {}),
-      ...Object.keys(oldData ?? {}),
-    ]);
-    const diffs = [...changedKeys].filter(
-      (key) =>
-        JSON.stringify((oldData ?? {})[key]) !==
-        JSON.stringify((newData ?? {})[key])
-    );
+    const diffs = changedFields(oldData, newData);
     return (
       <div className="space-y-1">
         {diffs.length === 0 && (
@@ -69,10 +124,10 @@ function ChangeSummary({ log }: { log: AuditLog }) {
             </span>
             <div className="flex flex-wrap gap-x-4 gap-y-0.5">
               <span className="text-red-700 line-through dark:text-red-400">
-                {oldData?.[key] == null ? "—" : String(oldData[key])}
+                {oldData[key] == null ? "—" : String(oldData[key])}
               </span>
               <span className="text-green-700 dark:text-green-400">
-                {newData?.[key] == null ? "—" : String(newData[key])}
+                {newData[key] == null ? "—" : String(newData[key])}
               </span>
             </div>
           </div>
@@ -81,9 +136,13 @@ function ChangeSummary({ log }: { log: AuditLog }) {
     );
   }
 
+  const entries = Object.entries(oldData);
   return (
     <div className="space-y-1">
-      {Object.entries(oldData ?? {}).map(([key, value]) => (
+      {entries.length === 0 && (
+        <p className="text-xs text-zinc-500">No field data recorded.</p>
+      )}
+      {entries.map(([key, value]) => (
         <div key={key} className="flex justify-between gap-3 text-xs">
           <span className="text-zinc-500">{key}</span>
           <span className="truncate font-mono text-zinc-800 dark:text-zinc-200">
@@ -257,7 +316,10 @@ export default function AuditAdminPage() {
                               {log.record_id.slice(0, 8)}…
                             </td>
                             <td className="px-4 py-3 sm:px-6">
-                              <div className="flex justify-end">
+                              <div className="flex items-center justify-end gap-3">
+                                <span className="hidden max-w-[18rem] truncate text-xs text-zinc-500 sm:inline dark:text-zinc-400">
+                                  {describeChange(log)}
+                                </span>
                                 <button
                                   type="button"
                                   onClick={() => toggleExpand(log.id)}

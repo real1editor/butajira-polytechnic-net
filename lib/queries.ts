@@ -410,11 +410,44 @@ export async function fetchStats(): Promise<Stats> {
 }
 
 export async function fetchAuditLogs(limit = 200): Promise<QueryResult<AuditLog>> {
-  return fetchRows<AuditLog>(
+  const logs = await fetchRows<AuditLog>(
     supabase
       .from("audit_logs")
-      .select("*, actor_profiles:profiles!audit_logs_actor_id_fkey(display_name)")
+      .select("*")
       .order("created_at", { ascending: false })
       .limit(limit)
   );
+
+  if (logs.error || !logs.data?.length) return logs;
+
+  const actorIds = [
+    ...new Set(
+      logs.data
+        .map((log) => log.actor_id)
+        .filter((id): id is string => Boolean(id))
+    ),
+  ];
+
+  if (actorIds.length > 0) {
+    const profiles = await fetchRows<Pick<UserProfile, "id" | "display_name">>(
+      supabase.from("profiles").select("id, display_name").in("id", actorIds)
+    );
+
+    if (!profiles.error && profiles.data) {
+      const displayNames = new Map(
+        profiles.data.map((profile) => [profile.id, profile.display_name])
+      );
+      return {
+        data: logs.data.map((log) => ({
+          ...log,
+          actor_profiles: log.actor_id
+            ? { display_name: displayNames.get(log.actor_id) ?? null }
+            : null,
+        })),
+        error: null,
+      };
+    }
+  }
+
+  return logs;
 }

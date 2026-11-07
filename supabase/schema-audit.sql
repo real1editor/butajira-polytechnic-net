@@ -20,9 +20,20 @@ create table if not exists public.audit_logs (
   record_id  uuid not null,
   action     text not null check (action in ('INSERT', 'UPDATE', 'DELETE')),
   changes    jsonb not null default '{}'::jsonb,
-  actor_id   uuid references auth.users(id) on delete set null,
+  actor_id   uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
 );
+
+-- Older installs created the actor FK against auth.users, which PostgREST
+-- cannot resolve to public.profiles. Repoint it at profiles so the app can
+-- embed the actor's display_name. NOT VALID tolerates legacy rows whose
+-- actor has no profile row while still enforcing the constraint on new
+-- writes.
+alter table public.audit_logs drop constraint if exists audit_logs_actor_id_fkey;
+alter table public.audit_logs
+  add constraint audit_logs_actor_id_fkey
+  foreign key (actor_id) references public.profiles(id)
+  on delete set null not valid;
 
 alter table public.audit_logs enable row level security;
 
