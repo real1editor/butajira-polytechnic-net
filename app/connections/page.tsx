@@ -20,7 +20,7 @@ import {
 } from "@/lib/queries";
 import { usePermissions } from "@/app/contexts/AuthContext";
 import { useToast } from "@/app/contexts/ToastContext";
-import ProtectRole, { ReadOnlyNotice } from "@/app/components/ProtectRole";
+import ProtectRole from "@/app/components/ProtectRole";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import ErrorBanner from "@/app/components/ErrorBanner";
 import { inputClass } from "@/lib/ui";
@@ -240,12 +240,7 @@ export default function ConnectionsPage() {
 
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-        <ProtectRole
-          allowedRoles={["admin", "technician"]}
-          fallback={
-            <ReadOnlyNotice message="Connections are shown in read-only mode. Contact an administrator to add or edit cables and ports." />
-          }
-        >
+        <ProtectRole allowedRoles={["admin", "technician"]}>
           <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-1 text-lg font-medium">New Connection</h2>
             <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
@@ -484,12 +479,7 @@ export default function ConnectionsPage() {
           )}
         </section>
 
-        <ProtectRole
-          allowedRoles={["admin", "technician"]}
-          fallback={
-            <ReadOnlyNotice message="Port management is restricted to administrators and technicians." />
-          }
-        >
+        <ProtectRole allowedRoles={["admin", "technician"]}>
           <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="mb-1 text-lg font-medium">Add a Port</h2>
             <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
