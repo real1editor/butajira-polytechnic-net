@@ -339,7 +339,9 @@ function Home() {
                 <option value="active">Active</option>
                 <option value="maintenance">Maintenance</option>
                 <option value="offline">Offline</option>
-                <option value="decommissioned">Decommissioned</option>
+                <option value="decommissioned" disabled={!canDelete}>
+                  Decommissioned
+                </option>
               </select>
             </label>
 
@@ -614,7 +616,9 @@ function Home() {
                   <option value="active">Active</option>
                   <option value="maintenance">Maintenance</option>
                   <option value="offline">Offline</option>
-                  <option value="decommissioned">Decommissioned</option>
+                  <option value="decommissioned" disabled={!canDelete}>
+                    Decommissioned
+                  </option>
                 </select>
               </label>
 

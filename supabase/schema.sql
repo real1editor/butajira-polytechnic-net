@@ -142,55 +142,69 @@ alter table public.maintenance_logs
   add column if not exists created_at timestamptz not null default now();
 
 -- ============================================================
--- AUTO GENERATE PORTS TRIGGER
+-- AUTO GENERATE / RECONCILE PORTS
+-- Keeps an asset's ports aligned with its current type, both on insert and
+-- whenever the type changes (e.g. switch -> router must not leave 24 stale
+-- numbered ports behind). Ports still referenced by a cable are never
+-- removed, since deleting them would cascade-delete the cable.
 -- ============================================================
+create or replace function public.reconcile_asset_ports(
+  p_asset_id uuid,
+  p_type text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  desired text[];
+begin
+  if p_type = 'patch_panel' then
+    desired := array(select generate_series(1, 48)::text);
+  elsif p_type = 'switch' then
+    desired := array(select generate_series(1, 24)::text);
+  else
+    desired := array['WAN', 'LAN'];
+  end if;
+
+  delete from public.ports p
+  where p.asset_id = p_asset_id
+    and not (p.port_number = any(desired))
+    and not exists (
+      select 1 from public.cables c
+      where c.endpoint_a_port_id = p.id or c.endpoint_b_port_id = p.id
+    );
+
+  insert into public.ports (asset_id, port_number, port_type)
+  select p_asset_id, pn, case when pn = 'WAN' then 'SFP' else 'RJ45' end
+  from unnest(desired) as pn
+  where not exists (
+    select 1 from public.ports
+    where asset_id = p_asset_id and port_number = pn
+  );
+end;
+$$;
+
+-- Trigger-only helper: keep it off the PostgREST/RPC surface.
+revoke all on function public.reconcile_asset_ports(uuid, text) from public;
+revoke all on function public.reconcile_asset_ports(uuid, text) from anon, authenticated;
+
 create or replace function public.generate_default_ports()
 returns trigger
 language plpgsql
+security definer
+set search_path = ''
 as $$
-declare
-  pn text;
-  total int;
 begin
-  if new.type = 'patch_panel' then
-    total := 48;
-  elsif new.type = 'switch' then
-    total := 24;
-  else
-    total := 0;
-  end if;
-
-  for pn in select generate_series(1, total)::text loop
-    insert into public.ports (asset_id, port_number)
-    select new.id, pn
-    where not exists (
-      select 1 from public.ports
-      where asset_id = new.id and port_number = pn
-    );
-  end loop;
-
-  if new.type = 'router' then
-    insert into public.ports (asset_id, port_number, port_type)
-    select new.id, 'WAN', 'SFP'
-    where not exists (
-      select 1 from public.ports
-      where asset_id = new.id and port_number = 'WAN'
-    );
-    insert into public.ports (asset_id, port_number)
-    select new.id, 'LAN'
-    where not exists (
-      select 1 from public.ports
-      where asset_id = new.id and port_number = 'LAN'
-    );
-  end if;
-
+  perform public.reconcile_asset_ports(new.id, new.type);
   return new;
 end;
 $$;
 
 drop trigger if exists trg_assets_generate_ports on public.assets;
 create trigger trg_assets_generate_ports
-after insert on public.assets
+after insert or update of type on public.assets
 for each row execute function public.generate_default_ports();
 
 -- ============================================================

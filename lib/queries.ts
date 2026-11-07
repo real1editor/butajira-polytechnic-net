@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { toUserMessage } from "@/lib/errors";
+import { todayLocal } from "@/lib/utils";
 import type { UserRole } from "@/app/contexts/AuthContext";
 import {
   CABLE_STATUSES,
@@ -221,7 +222,7 @@ export async function fetchAssets(): Promise<QueryResult<Asset>> {
 }
 
 const defaultTag = () =>
-  `BPC-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(
+  `BPC-${todayLocal().replace(/-/g, "")}-${Math.floor(
     Math.random() * 9000 + 1000
   )}`;
 

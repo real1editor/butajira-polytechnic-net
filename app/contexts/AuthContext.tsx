@@ -82,7 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser({ id: session.user.id, email: session.user.email ?? null });
-        fetchProfile(session.user.id).then(setProfile);
+        const id = session.user.id;
+        // Defer the profile query: Supabase warns that awaiting other
+        // client calls inside this callback can deadlock the auth client.
+        setTimeout(() => {
+          fetchProfile(id).then(setProfile);
+        }, 0);
       } else {
         setUser(null);
         setProfile(null);

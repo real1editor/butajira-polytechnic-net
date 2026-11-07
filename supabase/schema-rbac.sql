@@ -235,6 +235,84 @@ create policy "profiles_delete"
   using (public.user_role() = 'admin');
 
 -- ============================================================
+-- DECOMMISSION GUARD
+-- Soft-delete is admin-only. RLS cannot compare OLD vs NEW, so a trigger
+-- enforces that only admins may move a record into 'decommissioned'.
+-- Technicians can still edit other fields of an already-decommissioned
+-- record without changing its status.
+-- ============================================================
+create or replace function public.guard_decommission()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.status = 'decommissioned' and public.user_role() <> 'admin' then
+    if tg_op = 'INSERT' then
+      raise exception 'Only an admin can decommission this record.';
+    elsif old.status is distinct from 'decommissioned' then
+      raise exception 'Only an admin can decommission this record.';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_assets_guard_decommission on public.assets;
+create trigger trg_assets_guard_decommission
+  before insert or update of status on public.assets
+  for each row execute function public.guard_decommission();
+
+drop trigger if exists trg_cables_guard_decommission on public.cables;
+create trigger trg_cables_guard_decommission
+  before insert or update of status on public.cables
+  for each row execute function public.guard_decommission();
+
+-- ============================================================
+-- LAST-ADMIN GUARD
+-- Prevent lockout: the final admin cannot be demoted or removed.
+-- ============================================================
+create or replace function public.protect_last_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  remaining int;
+begin
+  if tg_op = 'DELETE' then
+    if old.role = 'admin' then
+      select count(*) into remaining
+      from public.profiles
+      where role = 'admin' and id <> old.id;
+      if remaining = 0 then
+        raise exception 'Cannot remove the last admin account.';
+      end if;
+    end if;
+    return old;
+  end if;
+
+  if old.role = 'admin' and new.role <> 'admin' then
+    select count(*) into remaining
+    from public.profiles
+    where role = 'admin' and id <> old.id;
+    if remaining = 0 then
+      raise exception 'Cannot demote the last admin account.';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_protect_last_admin on public.profiles;
+create trigger trg_protect_last_admin
+before update of role or delete on public.profiles
+for each row execute function public.protect_last_admin();
+
+-- ============================================================
 -- GRANTS (remove anon, keep authenticated)
 -- ============================================================
 revoke all on public.assets           from anon;
@@ -285,4 +363,6 @@ grant select on public.profiles to authenticated;
 --
 -- RLS: SELECT = any authenticated user; INSERT/UPDATE =
 -- admin + technician; DELETE = admin only. Profiles UPDATE = admin only.
+-- Decommissioning (status = 'decommissioned' on assets/cables) is also
+-- admin-only, enforced by the *_guard_decommission triggers above.
 -- ============================================================
