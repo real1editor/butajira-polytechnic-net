@@ -3,6 +3,7 @@
 import { ThemeProvider } from "@/app/contexts/ThemeContext";
 import { AuthProvider } from "@/app/contexts/AuthContext";
 import { ToastProvider } from "@/app/contexts/ToastContext";
+import { RealtimeProvider } from "@/app/contexts/RealtimeContext";
 import Toaster from "@/app/components/Toast";
 import CommandPalette from "@/app/components/CommandPalette";
 
@@ -11,9 +12,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
-          {children}
-          <Toaster />
-          <CommandPalette />
+          <RealtimeProvider>
+            {children}
+            <Toaster />
+            <CommandPalette />
+          </RealtimeProvider>
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

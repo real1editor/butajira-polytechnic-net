@@ -198,7 +198,7 @@ export async function updateAsset(
 ): Promise<string | null> {
   const updates: Record<string, unknown> = {};
   if ("name" in payload) updates.name = payload.name?.trim();
-  if ("asset_tag" in payload) updates.asset_tag = payload.asset_tag?.trim() || null;
+  if ("asset_tag" in payload) updates.asset_tag = payload.asset_tag?.trim() || "";
   if ("type" in payload) updates.type = payload.type;
   if ("status" in payload) updates.status = payload.status;
   if ("location" in payload) updates.location = payload.location?.trim() || null;

@@ -15,6 +15,8 @@ import { useTheme } from "@/app/contexts/ThemeContext";
 
 const GLYPHS = {
   dashboard: "M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z",
+  insights:
+    "M4 19V5m0 14h16M8 16v-5m4 5V8m4 8v-3m4 3V6",
   connections:
     "M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244",
   topology:
@@ -161,6 +163,15 @@ export default function CommandPalette() {
         run: () => goto("/"),
       },
       {
+        id: "page-insights",
+        label: "Network insights",
+        hint: "Health, recommendations & analytics",
+        group: "Pages",
+        glyph: "insights",
+        keywords: "analytics health score reports intelligence export",
+        run: () => goto("/insights"),
+      },
+      {
         id: "page-topology",
         label: "Network topology",
         hint: "Interactive physical map",
@@ -274,7 +285,7 @@ export default function CommandPalette() {
       keywords: [asset.location, asset.ip_address, asset.asset_tag, asset.status]
         .filter(Boolean)
         .join(" "),
-      run: () => goto(`/?q=${encodeURIComponent(asset.name)}`),
+      run: () => goto(`/assets/${asset.id}`),
     }));
 
     return [...base, ...assetCommands];

@@ -220,3 +220,55 @@ body {
     animation: none !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Printable asset labels. Everything outside `.print-label` is hidden so the
+   barcode label can be sent to a label printer at 100% scale.
+   -------------------------------------------------------------------------- */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-label,
+  .print-label * {
+    visibility: visible;
+  }
+
+  .print-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: #ffffff !important;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .print-label .label-card {
+    border: 1px solid #000000;
+    border-radius: 6px;
+    max-width: 90mm;
+    margin: 0 auto;
+    padding: 6mm;
+    color: #000000;
+    background: #ffffff;
+  }
+
+  .print-label svg {
+    max-width: 100%;
+    height: auto;
+  }
+}

@@ -30,6 +30,15 @@ export function formatDate(iso: string): string {
   }
 }
 
+/** Formats a numeric amount as Ethiopian Birr without trailing noise. */
+export function formatCurrency(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(Number(value))) return "—";
+  return `ETB ${Number(value).toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 /** Formats a full ISO datetime string for display. */
 export function formatDateTime(iso: string): string {
   try {

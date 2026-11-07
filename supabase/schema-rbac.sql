@@ -21,18 +21,23 @@ alter table public.profiles enable row level security;
 -- for tables created before this was aligned.
 alter table public.profiles alter column role set default 'viewer';
 
--- Publish profile changes via Realtime so logged-in users pick up a
--- role change (admin promotes them) immediately, without re-login.
+-- Publish all live-synced tables via Realtime so screens pick up inserts,
+-- updates and deletes without a manual refresh. The app subscribes to every
+-- table below through a single shared channel.
 do $$
+declare
+  t text;
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
-    if not exists (
-      select 1 from pg_publication_tables
-      where pubname = 'supabase_realtime'
-        and schemaname = 'public' and tablename = 'profiles'
-    ) then
-      alter publication supabase_realtime add table public.profiles;
-    end if;
+    foreach t in array array['profiles', 'assets', 'ports', 'cables', 'maintenance_logs'] loop
+      if not exists (
+        select 1 from pg_publication_tables
+        where pubname = 'supabase_realtime'
+          and schemaname = 'public' and tablename = t
+      ) then
+        execute format('alter publication supabase_realtime add table public.%I', t);
+      end if;
+    end loop;
   end if;
 exception
   when others then
