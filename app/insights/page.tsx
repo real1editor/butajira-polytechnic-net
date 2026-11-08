@@ -159,12 +159,12 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
-              <span className={`live-dot inline-flex h-1.5 w-1.5 rounded-full ${connected ? "text-blue-500" : "text-amber-500"}`} />
+            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300">
+              <span className={`live-dot inline-flex h-1.5 w-1.5 rounded-full ${connected ? "text-cyan-400" : "text-amber-500"}`} />
               {connected ? "Live intelligence" : "Live sync paused"}
             </span>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -180,7 +180,7 @@ export default function InsightsPage() {
               type="button"
               onClick={handleExportAssets}
               disabled={assets.length === 0}
-              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              className="btn-secondary px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40"
             >
               Export assets
             </button>
@@ -188,7 +188,7 @@ export default function InsightsPage() {
               type="button"
               onClick={handleExportCables}
               disabled={cables.length === 0}
-              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              className="btn-secondary px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40"
             >
               Export cables
             </button>
@@ -196,7 +196,7 @@ export default function InsightsPage() {
               type="button"
               onClick={handleExportLogs}
               disabled={logs.length === 0}
-              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              className="btn-secondary px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-40"
             >
               Export logs
             </button>
@@ -221,7 +221,7 @@ export default function InsightsPage() {
         ) : (
           <>
             <section className="mb-4 grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-              <div className="flex flex-col items-center rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex flex-col items-center glass-card p-5 sm:p-6">
                 <HealthGauge score={health.score} grade={health.grade} />
                 <p className="mt-3 text-center text-sm font-medium text-zinc-700 dark:text-zinc-200">
                   {health.summary}
@@ -264,7 +264,7 @@ export default function InsightsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="glass-card p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold tracking-tight">
@@ -274,7 +274,7 @@ export default function InsightsPage() {
                       Generated automatically from the current state of the network.
                     </p>
                   </div>
-                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                  <span className="glass-chip rounded-full px-2 py-0.5 text-[10px] font-medium">
                     {insights.length} signal{insights.length === 1 ? "" : "s"}
                   </span>
                 </div>
@@ -285,7 +285,7 @@ export default function InsightsPage() {
                     return (
                       <li
                         key={insight.id}
-                        className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50/60 p-3 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-800/40 dark:hover:border-zinc-700"
+                        className="flex items-start gap-3 rounded-lg border border-slate-200/60 bg-white/40 p-3 backdrop-blur transition-colors hover:border-cyan-400/30 dark:border-white/10 dark:bg-white/5 dark:hover:border-cyan-400/30"
                       >
                         <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${style.dot}`} />
                         <div className="min-w-0 flex-1">
@@ -319,7 +319,7 @@ export default function InsightsPage() {
             </section>
 
             <section className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="glass-card p-5">
                 <h2 className="text-sm font-semibold tracking-tight">Assets by status</h2>
                 <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
                   {assets.length} registered asset{assets.length === 1 ? "" : "s"}
@@ -327,7 +327,7 @@ export default function InsightsPage() {
                 <DonutChart data={statusData} centerLabel="Assets" centerValue={assets.length} />
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="glass-card p-5">
                 <h2 className="text-sm font-semibold tracking-tight">Asset mix</h2>
                 <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
                   Hardware distribution across the campus
@@ -335,7 +335,7 @@ export default function InsightsPage() {
                 <DonutChart data={typeData} centerLabel="Types" centerValue={assets.length} />
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm md:col-span-2 xl:col-span-1 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="glass-card p-5 md:col-span-2 xl:col-span-1">
                 <h2 className="text-sm font-semibold tracking-tight">Maintenance outcomes</h2>
                 <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
                   {logs.length} recorded log{logs.length === 1 ? "" : "s"}
@@ -374,7 +374,7 @@ export default function InsightsPage() {
             </section>
 
             <section className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="glass-card p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold tracking-tight">Maintenance spend</h2>
@@ -398,7 +398,7 @@ export default function InsightsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="glass-card p-5">
                 <h2 className="text-sm font-semibold tracking-tight">Capacity snapshot</h2>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Highest port utilization first

@@ -32,4 +32,10 @@ jobs:
 
       - run: npm run build
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E smoke tests
+        run: npm run test:e2e
+
       - run: npm audit --omit=dev --audit-level=high

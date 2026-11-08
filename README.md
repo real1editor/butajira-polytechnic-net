@@ -23,19 +23,31 @@ patch cables, and maintenance work at Butajira Polytechnic College. Built with
    npm install
    ```
 
-2. Create `.env.local` from the template:
+2. Create `.env.local` from the committed template:
+
+   ```bash
+   copy .env.example .env.local
+   ```
+
+   Then fill in your Supabase project values:
 
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+   # Optional: absolute URL used for OpenGraph/canonical metadata.
+   NEXT_PUBLIC_SITE_URL=https://<your-domain>
    ```
 
 3. Run the app:
 
    ```bash
-   npm run dev      # development
-   npm run build    # production build (also validates the proxy middleware)
-   npm run lint     # eslint
+   npm run dev        # development
+   npm run build      # production build (also validates the proxy middleware)
+   npm run start      # serve the production build
+   npm run lint       # eslint
+   npm run typecheck  # tsc --noEmit
+   npm test           # Vitest unit tests
+   npm run test:e2e   # Playwright smoke tests (build first)
    ```
 
 ## Database Setup
@@ -48,6 +60,7 @@ Apply the SQL files **in order** from the Supabase SQL Editor (or `supabase db p
 | 2     | `schema.sql`    | Core tables (`assets`, `ports`, `cables`, `maintenance_logs`), auto-port trigger, full-text search-friendly design. Enables RLS (deny-by-default) |
 | 3     | `schema-rbac.sql` | `profiles` table, Auth signup trigger, role-based RLS policies, grants, Realtime |
 | 4     | `schema-audit.sql` | Audit logging (`audit_logs` + triggers), optimization indexes, port-exclusivity invariant, `v_asset_summary` RLS hardening |
+| 5     | `rls-verify.sql` | Read-only check: fails loudly if RLS, a policy, or a grant is missing |
 
 `schema-rbac.sql` is idempotent and can also be re-run on an existing install to
 upgrade from the legacy open (anon) policies. A **backfill** statement is included
@@ -124,6 +137,35 @@ and the changed row (before/after) as JSONB.
 All mutation payloads in `lib/queries.ts` are validated with Zod (`lib/validation.ts`)
 before any network call, so malformed input never reaches the API. Forms get a
 human-readable message back and users see it immediately.
+
+## Testing
+
+- **Unit tests** (`tests/*.test.ts`, Vitest): validation, permissions, query helpers.
+- **E2E smoke tests** (`tests/e2e`, Playwright): dark theme, skip link, metadata,
+  manifest, protected-route redirects, health endpoint and static icons.
+- Authenticated E2E checks are opt-in: set `E2E_EMAIL` and `E2E_PASSWORD` to a
+  real test account before running `npm run test:e2e`. The command expects a
+  production build (`npm run build`) and starts `next start` on port 3100 unless
+  `PLAYWRIGHT_BASE_URL` points at an already-running deployment.
+- CI (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, build, the
+  Playwright smoke suite, and an `npm audit --omit=dev --audit-level=high` gate.
+
+## Operations
+
+- **Health check:** `GET /api/health` returns `{ "status": "ok", ... }` with
+  `Cache-Control: no-store`. Point your uptime monitor or container probe at it.
+- **Error logging:** `instrumentation.ts` reports unhandled server request
+  errors as JSON (route, route type, router, URL, method) through
+  `lib/logger.ts`, so platform log collectors can parse them.
+- **Search indexing:** the app is an internal console; `/robots.txt` disallows
+  all crawlers and pages emit `noindex, nofollow`.
+- **Scaling:** the audit viewer is server-paginated (25 rows/page) and filters
+  by table/action in SQL; `fetchAuditLogs` is capped at 100 rows per request.
+- **Backups:** enable daily automated backups in Supabase (Project Settings →
+  Database → Backups) and before running `supabase/reset.sql` in production.
+  To restore, use Supabase's point-in-time recovery or restore the latest
+  backup, then re-run `schema.sql`, `schema-rbac.sql`, and `schema-audit.sql`
+  in that order if the schema was lost.
 
 ## Routes
 

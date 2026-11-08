@@ -1,5 +1,8 @@
 "use client";
 
+import { useId, useRef } from "react";
+import { useDialog } from "@/app/components/useDialog";
+
 type ConfirmDialogProps = {
   open: boolean;
   title: string;
@@ -19,29 +22,45 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialog(open, onCancel, panelRef);
+
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/40 p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-backdrop-in"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+        ref={panelRef}
+        tabIndex={-1}
+        className="glass-card-strong animate-palette-in w-full max-w-sm p-6 outline-none"
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={`${titleId}-description`}
       >
-        <h2 className="text-base font-semibold text-zinc-900 dark:text-white">
+        <h2
+          id={titleId}
+          className="text-base font-semibold text-slate-900 dark:text-white"
+        >
           {title}
         </h2>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{message}</p>
+        <p
+          id={`${titleId}-description`}
+          className="mt-2 text-sm text-slate-600 dark:text-slate-400"
+        >
+          {message}
+        </p>
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            className="btn-secondary"
           >
             Cancel
           </button>
@@ -49,7 +68,7 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-danger"
           >
             {busy ? "Working..." : confirmLabel}
           </button>

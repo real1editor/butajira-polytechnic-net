@@ -135,7 +135,7 @@ export default function AssetDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+      <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
           <div className="grid gap-4 lg:grid-cols-2">
             <PanelSkeleton rows={5} />
@@ -151,7 +151,7 @@ export default function AssetDetailPage() {
 
   if (!asset) {
     return (
-      <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+      <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-md text-center">
             <span className="mb-3 inline-flex h-3 w-3 rounded-full bg-amber-500" />
@@ -161,7 +161,7 @@ export default function AssetDetailPage() {
             </p>
             <Link
               href="/"
-              className="mt-6 inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="mt-6 inline-block btn-primary"
             >
               Back to dashboard
             </Link>
@@ -172,7 +172,7 @@ export default function AssetDetailPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <Link
@@ -187,11 +187,11 @@ export default function AssetDetailPage() {
 
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-        <header className="mb-5 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <header className="glass-card mb-5 overflow-hidden p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                <span className="glass-chip rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                   {TYPE_LABELS[asset.type]}
                 </span>
                 <span
@@ -229,7 +229,7 @@ export default function AssetDetailPage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="btn-primary px-3 py-2 text-xs"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5z" />
@@ -238,7 +238,7 @@ export default function AssetDetailPage() {
               </button>
               <Link
                 href="/topology"
-                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                className="btn-secondary px-3 py-2 text-xs"
               >
                 View topology
               </Link>
@@ -247,14 +247,14 @@ export default function AssetDetailPage() {
         </header>
 
         <section className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="glass-card p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
               Ports
             </p>
             <p className="mt-1 text-2xl font-semibold tabular-nums">{stats.ports}</p>
             <p className="mt-0.5 text-[11px] text-zinc-500">{stats.free} free</p>
           </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="glass-card p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
               Utilization
             </p>
@@ -263,14 +263,14 @@ export default function AssetDetailPage() {
               {stats.used} of {stats.ports} in use
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="glass-card p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
               Connections
             </p>
             <p className="mt-1 text-2xl font-semibold tabular-nums">{stats.connections}</p>
             <p className="mt-0.5 text-[11px] text-zinc-500">live cable peers</p>
           </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="glass-card p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
               Maintenance
             </p>
@@ -280,7 +280,7 @@ export default function AssetDetailPage() {
         </section>
 
         <div className="mb-5 grid gap-4 lg:grid-cols-2">
-          <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="glass-card p-5">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold tracking-tight">Port map</h2>
               <span className="text-[11px] text-zinc-400">
@@ -307,8 +307,8 @@ export default function AssetDetailPage() {
                         }
                         className={`flex flex-col rounded-md border px-1.5 py-1 text-center ${
                           isUsed
-                            ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                            : "border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400"
+                            ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:border-emerald-400/30 dark:text-emerald-300"
+                            : "border-slate-300/60 bg-white/40 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
                         }`}
                       >
                         <span className="truncate font-mono text-[11px] font-semibold">
@@ -333,7 +333,7 @@ export default function AssetDetailPage() {
             )}
           </section>
 
-          <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="glass-card p-5">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold tracking-tight">Cable connections</h2>
               <Link
@@ -348,7 +348,7 @@ export default function AssetDetailPage() {
                 This asset has no live cables. Map a port on the Connections page.
               </p>
             ) : (
-              <ul className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+              <ul className="mt-3 divide-y divide-slate-200/50 dark:divide-white/5">
                 {connections.map(({ cable, local, peer }) => (
                   <li key={cable.id} className="flex items-start justify-between gap-3 py-2.5">
                     <div className="min-w-0">
@@ -368,8 +368,8 @@ export default function AssetDetailPage() {
                     <span
                       className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${
                         cable.status === "active"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-500/10 dark:text-blue-300"
+                          ? "border border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:text-emerald-300"
+                          : "border border-cyan-400/30 bg-cyan-400/15 text-cyan-700 dark:text-cyan-300"
                       }`}
                     >
                       {cable.status}
@@ -381,7 +381,7 @@ export default function AssetDetailPage() {
           </section>
         </div>
 
-        <section className="mb-5 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="mb-5 glass-card p-5">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold tracking-tight">Maintenance timeline</h2>
             <Link
@@ -408,7 +408,7 @@ export default function AssetDetailPage() {
                           : "bg-amber-500"
                     }`}
                   />
-                  <span className="absolute left-[4px] top-4 h-[calc(100%+0.5rem)] w-px bg-zinc-200 dark:bg-zinc-800" />
+                  <span className="absolute left-[4px] top-4 h-[calc(100%+0.5rem)] w-px bg-slate-200/70 dark:bg-white/10" />
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
                       {log.title}
@@ -430,7 +430,7 @@ export default function AssetDetailPage() {
           )}
         </section>
 
-        <section className="print-label rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="print-label glass-card p-5">
           <div className="mb-3 flex items-center justify-between gap-2 print:hidden">
             <h2 className="text-sm font-semibold tracking-tight">Asset label</h2>
             <span className="text-[10px] uppercase tracking-wide text-zinc-400">

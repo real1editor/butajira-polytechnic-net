@@ -42,7 +42,7 @@ const STACK = ["PostgreSQL", "Supabase Auth", "Row Level Security", "Realtime"];
 
 function BrandPanel() {
   return (
-    <section className="relative hidden overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-8 text-white shadow-2xl lg:flex lg:flex-col">
+    <section className="relative hidden overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 p-8 text-white shadow-2xl backdrop-blur-xl lg:flex lg:flex-col">
       <div className="pointer-events-none absolute inset-0 opacity-90">
         <div className="animate-aurora absolute -left-16 -top-24 h-72 w-72 rounded-full bg-emerald-500/30 blur-3xl" />
         <div className="animate-aurora-slow absolute -right-10 top-24 h-64 w-64 rounded-full bg-blue-600/30 blur-3xl" />
@@ -128,10 +128,10 @@ function BrandPanel() {
 
 export default function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <main className="relative flex flex-1 overflow-hidden bg-zinc-50 font-sans dark:bg-zinc-950">
+    <main className="relative flex flex-1 overflow-hidden font-sans">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-500/10" />
-        <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl dark:bg-blue-500/10" />
+        <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl dark:bg-cyan-500/10" />
       </div>
 
       <div className="relative mx-auto grid w-full max-w-6xl flex-1 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:items-stretch lg:gap-10 lg:py-12">
@@ -139,7 +139,7 @@ export default function AuthShell({ children }: { children: ReactNode }) {
 
         <div className="flex flex-col justify-center">
           <div className="mb-6 flex items-center justify-center gap-3 lg:hidden">
-            <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200/60 bg-white/70 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
               <Image
                 src="/company-logo.png"
                 alt="Butajira Polytechnic College logo"

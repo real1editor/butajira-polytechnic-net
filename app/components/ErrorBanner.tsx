@@ -10,7 +10,7 @@ export default function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
   return (
     <div
       role="alert"
-      className="mb-6 flex items-center justify-between gap-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300"
+      className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-700 backdrop-blur-xl dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300"
     >
       <span>{message}</span>
       <button

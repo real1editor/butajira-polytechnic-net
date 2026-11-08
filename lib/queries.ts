@@ -158,10 +158,14 @@ export const TYPE_LABELS: Record<AssetType, string> = {
 };
 
 export const STATUS_STYLES: Record<AssetStatus, string> = {
-  active: "bg-green-100 text-green-800",
-  maintenance: "bg-amber-100 text-amber-800",
-  offline: "bg-red-100 text-red-800",
-  decommissioned: "bg-zinc-200 text-zinc-600",
+  active:
+    "border border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:text-emerald-300",
+  maintenance:
+    "border border-amber-400/30 bg-amber-400/15 text-amber-700 dark:text-amber-300",
+  offline:
+    "border border-rose-400/30 bg-rose-400/15 text-rose-700 dark:text-rose-300",
+  decommissioned:
+    "border border-slate-400/30 bg-slate-400/10 text-slate-600 dark:text-slate-400",
 };
 
 export const CABLE_TYPE_LABELS: Record<CableType, string> = {
@@ -174,9 +178,12 @@ export const CABLE_TYPE_LABELS: Record<CableType, string> = {
 };
 
 export const CABLE_STATUS_STYLES: Record<CableStatus, string> = {
-  active: "bg-green-100 text-green-800",
-  planned: "bg-blue-100 text-blue-800",
-  decommissioned: "bg-zinc-200 text-zinc-600",
+  active:
+    "border border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:text-emerald-300",
+  planned:
+    "border border-cyan-400/30 bg-cyan-400/15 text-cyan-700 dark:text-cyan-300",
+  decommissioned:
+    "border border-slate-400/30 bg-slate-400/10 text-slate-600 dark:text-slate-400",
 };
 
 export const MAINTENANCE_TYPE_LABELS: Record<MaintenanceType, string> = {
@@ -186,9 +193,12 @@ export const MAINTENANCE_TYPE_LABELS: Record<MaintenanceType, string> = {
 };
 
 export const OUTCOME_STYLES: Record<MaintenanceOutcome, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  completed: "bg-green-100 text-green-800",
-  failed: "bg-red-100 text-red-800",
+  pending:
+    "border border-amber-400/30 bg-amber-400/15 text-amber-700 dark:text-amber-300",
+  completed:
+    "border border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:text-emerald-300",
+  failed:
+    "border border-rose-400/30 bg-rose-400/15 text-rose-700 dark:text-rose-300",
 };
 
 export async function updateAsset(
@@ -410,45 +420,81 @@ export async function fetchStats(): Promise<Stats> {
   }
 }
 
-export async function fetchAuditLogs(limit = 200): Promise<QueryResult<AuditLog>> {
-  const logs = await fetchRows<AuditLog>(
-    supabase
+export type AuditLogPage = {
+  data: AuditLog[] | null;
+  error: string | null;
+  count: number | null;
+};
+
+export type AuditLogQuery = {
+  limit?: number;
+  offset?: number;
+  table?: AuditTableName | "all";
+  action?: AuditLogAction | "all";
+};
+
+export async function fetchAuditLogs({
+  limit = 25,
+  offset = 0,
+  table = "all",
+  action = "all",
+}: AuditLogQuery = {}): Promise<AuditLogPage> {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  const safeOffset = Math.max(offset, 0);
+
+  try {
+    let query = supabase
       .from("audit_logs")
-      .select("*")
+      .select("*", { count: "exact" });
+
+    if (table !== "all") query = query.eq("table_name", table);
+    if (action !== "all") query = query.eq("action", action);
+
+    const logs = await query
       .order("created_at", { ascending: false })
-      .limit(limit)
-  );
+      .range(safeOffset, safeOffset + safeLimit - 1);
 
-  if (logs.error || !logs.data?.length) return logs;
-
-  const actorIds = [
-    ...new Set(
-      logs.data
-        .map((log) => log.actor_id)
-        .filter((id): id is string => Boolean(id))
-    ),
-  ];
-
-  if (actorIds.length > 0) {
-    const profiles = await fetchRows<Pick<UserProfile, "id" | "display_name">>(
-      supabase.from("profiles").select("id, display_name").in("id", actorIds)
-    );
-
-    if (!profiles.error && profiles.data) {
-      const displayNames = new Map(
-        profiles.data.map((profile) => [profile.id, profile.display_name])
-      );
-      return {
-        data: logs.data.map((log) => ({
-          ...log,
-          actor_profiles: log.actor_id
-            ? { display_name: displayNames.get(log.actor_id) ?? null }
-            : null,
-        })),
-        error: null,
-      };
+    if (logs.error) {
+      return { data: null, error: toUserMessage(logs.error), count: null };
     }
-  }
 
-  return logs;
+    const rows = (logs.data as AuditLog[] | null) ?? [];
+    const count = logs.count ?? rows.length;
+
+    if (rows.length === 0) return { data: rows, error: null, count };
+
+    const actorIds = [
+      ...new Set(
+        rows.map((log) => log.actor_id).filter((id): id is string => Boolean(id))
+      ),
+    ];
+
+    if (actorIds.length > 0) {
+      const profiles = await fetchRows<
+        Pick<UserProfile, "id" | "display_name">
+      >(
+        supabase.from("profiles").select("id, display_name").in("id", actorIds)
+      );
+
+      if (!profiles.error && profiles.data) {
+        const displayNames = new Map(
+          profiles.data.map((profile) => [profile.id, profile.display_name])
+        );
+        return {
+          data: rows.map((log) => ({
+            ...log,
+            actor_profiles: log.actor_id
+              ? { display_name: displayNames.get(log.actor_id) ?? null }
+              : null,
+          })),
+          error: null,
+          count,
+        };
+      }
+    }
+
+    return { data: rows, error: null, count };
+  } catch (err) {
+    return { data: null, error: toUserMessage(err), count: null };
+  }
 }

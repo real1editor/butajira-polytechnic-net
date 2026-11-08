@@ -1,9 +1,12 @@
 export default function Footer() {
   return (
-    <footer className="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-zinc-500 sm:flex-row sm:px-6">
+    <footer className="mt-auto border-t border-slate-200/60 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.02]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:px-6 dark:text-slate-400">
         <p>&copy; {new Date().getFullYear()} Butajira Polytechnic College</p>
-        <p>Network Asset & Cable Infrastructure Management</p>
+        <p className="inline-flex items-center gap-2">
+          <span className="live-dot inline-flex h-1.5 w-1.5 rounded-full text-emerald-500" />
+          Network Asset &amp; Cable Infrastructure Management
+        </p>
       </div>
     </footer>
   );

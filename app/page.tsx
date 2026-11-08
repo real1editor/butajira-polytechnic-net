@@ -264,7 +264,7 @@ function Home() {
   };
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
       {deleting && (
         <ConfirmDialog
           open={!!deleting}
@@ -374,14 +374,14 @@ function Home() {
                 type="button"
                 onClick={() => setEditing(null)}
                 disabled={saving}
-                className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                className="btn-secondary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="btn-primary"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>
@@ -391,14 +391,14 @@ function Home() {
       </Modal>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <header className="relative mb-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:mb-8 sm:p-8 dark:border-zinc-800 dark:bg-zinc-900">
+        <header className="glass-card relative mb-6 overflow-hidden p-5 sm:mb-8 sm:p-8">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-500/15" />
-            <div className="absolute -bottom-24 left-1/4 h-56 w-56 rounded-full bg-blue-400/10 blur-3xl dark:bg-blue-500/15" />
+            <div className="absolute -bottom-24 left-1/4 h-56 w-56 rounded-full bg-cyan-400/10 blur-3xl dark:bg-cyan-500/15" />
           </div>
           <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
                 <span className="live-dot inline-flex h-1.5 w-1.5 rounded-full text-emerald-500" />
                 Network Operations Center
               </span>
@@ -413,7 +413,7 @@ function Home() {
                   (chip) => (
                     <span
                       key={chip}
-                      className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400"
+                      className="glass-chip rounded-md px-2 py-1"
                     >
                       {chip}
                     </span>
@@ -433,7 +433,7 @@ function Home() {
 
         {!loading && assets.length > 0 && (
           <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 sm:mb-8">
-            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="glass-card p-4 sm:p-5">
               <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
                 Assets by Status
               </h2>
@@ -454,7 +454,7 @@ function Home() {
                           {count} · {pct}%
                         </span>
                       </div>
-                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
                         <div
                           className={`h-full rounded-full ${statusBarTint[status]}`}
                           style={{ width: `${pct}%` }}
@@ -466,7 +466,7 @@ function Home() {
               )}
             </div>
 
-            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="glass-card p-4 sm:p-5">
               <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
                 Assets by Type
               </h2>
@@ -487,7 +487,7 @@ function Home() {
                           {count} · {pct}%
                         </span>
                       </div>
-                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
                         <div
                           className={`h-full rounded-full ${TYPE_TINT[type]}`}
                           style={{ width: `${pct}%` }}
@@ -499,7 +499,7 @@ function Home() {
               )}
             </div>
 
-            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="glass-card p-4 sm:p-5">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
                   Recent Maintenance
@@ -542,7 +542,7 @@ function Home() {
         )}
 
         <ProtectRole allowedRoles={["admin", "technician"]}>
-          <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="glass-card mb-6 p-4 sm:mb-8 sm:p-6">
             <h2 className="mb-4 text-lg font-medium">Add Asset</h2>
             <form
               onSubmit={handleSubmit}
@@ -626,7 +626,7 @@ function Home() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full rounded-md bg-zinc-900 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="btn-primary w-full sm:w-auto"
                 >
                   {saving ? "Adding..." : "Add Asset"}
                 </button>
@@ -637,8 +637,8 @@ function Home() {
 
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-        <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-zinc-800">
+        <section className="glass-card overflow-hidden">
+          <div className="flex flex-col gap-3 border-b border-slate-200/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-white/10">
             <div>
               <h2 className="text-lg font-medium">Registered Assets</h2>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
@@ -680,8 +680,8 @@ function Home() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-[640px] divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+              <table className="min-w-[640px] divide-y divide-slate-200/60 text-sm dark:divide-white/10">
+                <thead className="bg-transparent">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Name</th>
                     <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Tag</th>
@@ -694,9 +694,9 @@ function Home() {
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-slate-200/50 dark:divide-white/5">
                   {filteredAssets.map((asset) => (
-                    <tr key={asset.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                    <tr key={asset.id} className="hover:bg-cyan-400/5 dark:hover:bg-cyan-400/5">
                       <td className="px-4 py-3 font-medium sm:px-6">{asset.name}</td>
                       <td className="px-4 py-3 font-mono text-xs text-zinc-500 sm:px-6">
                         {asset.asset_tag || "—"}
@@ -726,7 +726,7 @@ function Home() {
                             <button
                               type="button"
                               onClick={() => setEditing(asset)}
-                              className="text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-900 dark:hover:text-white"
+                              className="text-sm font-medium text-slate-500 transition-colors hover:text-cyan-600 dark:text-slate-400 dark:hover:text-cyan-300"
                             >
                               Edit
                             </button>
@@ -734,7 +734,7 @@ function Home() {
                               <button
                                 type="button"
                                 onClick={() => setDeleting(asset)}
-                                className="text-sm font-medium text-zinc-400 transition-colors hover:text-red-600"
+                                className="text-sm font-medium text-slate-500 transition-colors hover:text-rose-500 dark:text-slate-400"
                               >
                                 Delete
                               </button>

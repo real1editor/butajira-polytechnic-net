@@ -23,39 +23,17 @@ const THEME_OPTIONS = [
 ] as const;
 
 function ThemeToggle() {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
 
-  const icon =
-    resolvedTheme === "dark" ? (
-      <svg
-        className="h-4 w-4"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-        />
-      </svg>
-    ) : (
-      <svg
-        className="h-4 w-4"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-        />
-      </svg>
-    );
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <div className="relative">
@@ -63,9 +41,39 @@ function ThemeToggle() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Toggle color theme"
-        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="theme-menu"
+        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
       >
-        {icon}
+        <svg
+          className="h-4 w-4 dark:hidden"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+        <svg
+          className="hidden h-4 w-4 dark:block"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
       </button>
       {open && (
         <>
@@ -73,19 +81,26 @@ function ThemeToggle() {
             className="fixed inset-0 z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-50 mt-1 w-36 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+          <div
+            id="theme-menu"
+            role="menu"
+            aria-label="Color theme"
+            className="glass-card-strong absolute right-0 z-50 mt-2 w-36 overflow-hidden py-1"
+          >
             {THEME_OPTIONS.map((option) => (
               <button
                 key={option.value}
                 type="button"
+                role="menuitemradio"
+                aria-checked={theme === option.value}
                 onClick={() => {
                   setTheme(option.value);
                   setOpen(false);
                 }}
                 className={`block w-full px-4 py-2 text-left text-sm transition-colors ${
                   theme === option.value
-                    ? "bg-zinc-100 font-medium text-zinc-900 dark:bg-zinc-700 dark:text-white"
-                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white"
+                    ? "bg-cyan-400/15 font-medium text-cyan-700 dark:text-cyan-300"
+                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                 }`}
               >
                 {option.label}
@@ -102,11 +117,20 @@ function UserMenu() {
   const { user, profile, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   if (!user) {
     return (
       <Link
         href="/login"
-        className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="btn-primary px-3.5 py-1.5"
       >
         Sign In
       </Link>
@@ -121,9 +145,13 @@ function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex max-w-[10rem] items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="user-menu"
+        aria-label={`Account menu for ${displayName}`}
+        className="flex max-w-[10rem] items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
       >
-        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
+        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-cyan-400 text-xs font-semibold text-slate-950 shadow-sm">
           {displayName.charAt(0).toUpperCase()}
         </span>
         <span className="hidden truncate sm:block">
@@ -134,8 +162,13 @@ function UserMenu() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-            <div className="border-b border-zinc-100 px-4 py-2 dark:border-zinc-700">
+          <div
+            id="user-menu"
+            role="menu"
+            aria-label="Account"
+            className="glass-card-strong absolute right-0 z-50 mt-2 w-48 overflow-hidden py-1"
+          >
+            <div className="border-b border-slate-200/60 px-4 py-2 dark:border-white/10">
               <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">
                 {displayName}
               </p>
@@ -145,6 +178,7 @@ function UserMenu() {
             </div>
             <button
               type="button"
+              role="menuitem"
               onClick={() => {
                 setOpen(false);
                 signOut();
@@ -177,7 +211,7 @@ export default function Header() {
   }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95">
+    <header className="glass-bar sticky top-0 z-30">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <Image
@@ -185,10 +219,10 @@ export default function Header() {
             alt="Company logo"
             width={32}
             height={32}
-            className="h-8 w-8 rounded object-contain"
+            className="h-8 w-8 rounded-lg object-contain ring-1 ring-cyan-400/20"
             priority
           />
-          <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-white">
+          <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">
             BPC Network Management
           </span>
         </Link>
@@ -204,10 +238,11 @@ export default function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    aria-current={active ? "page" : undefined}
                     className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                       active
-                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                        ? "bg-cyan-400/15 text-cyan-700 ring-1 ring-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 dark:ring-cyan-400/30"
+                        : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                     }`}
                   >
                     {link.label}
@@ -217,20 +252,26 @@ export default function Header() {
               <ProtectRole allowedRoles={["admin"]}>
                 <Link
                   href="/admin/users"
+                  aria-current={
+                    pathname.startsWith("/admin/users") ? "page" : undefined
+                  }
                   className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     pathname.startsWith("/admin/users")
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                      ? "bg-cyan-400/15 text-cyan-700 ring-1 ring-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 dark:ring-cyan-400/30"
+                      : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                   }`}
                 >
                   Users
                 </Link>
                 <Link
                   href="/admin/audit"
+                  aria-current={
+                    pathname.startsWith("/admin/audit") ? "page" : undefined
+                  }
                   className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     pathname.startsWith("/admin/audit")
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                      ? "bg-cyan-400/15 text-cyan-700 ring-1 ring-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 dark:ring-cyan-400/30"
+                      : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                   }`}
                 >
                   Audit
@@ -243,7 +284,8 @@ export default function Header() {
             type="button"
             onClick={() => window.dispatchEvent(new Event("bpc:open-command"))}
             aria-label="Open command palette"
-            className="flex items-center gap-2 rounded-md border border-zinc-200 bg-white/70 px-2 py-1.5 text-sm font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-100"
+            aria-keyshortcuts="Control+K Meta+K"
+            className="glass-chip flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors hover:border-cyan-400/40 hover:text-cyan-700 dark:hover:text-cyan-300"
           >
             <svg
               className="h-4 w-4"
@@ -271,7 +313,8 @@ export default function Header() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Toggle navigation menu"
               aria-expanded={mobileOpen}
-              className="rounded-md p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 md:hidden dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              aria-controls="mobile-nav"
+              className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-white/60 hover:text-slate-900 md:hidden dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
             >
               {mobileOpen ? (
                 <svg
@@ -308,7 +351,11 @@ export default function Header() {
       </div>
 
       {isAuthed && mobileOpen && (
-        <nav className="border-t border-zinc-200 md:hidden dark:border-zinc-800">
+        <nav
+          id="mobile-nav"
+          aria-label="Mobile navigation"
+          className="border-t border-slate-200/60 md:hidden dark:border-white/10"
+        >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-2 sm:px-6">
             {LINKS.map((link) => {
               const active =
@@ -319,10 +366,11 @@ export default function Header() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
+                  aria-current={active ? "page" : undefined}
                   className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                     active
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                      ? "bg-cyan-400/15 text-cyan-700 ring-1 ring-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 dark:ring-cyan-400/30"
+                      : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                   }`}
                 >
                   {link.label}
@@ -333,10 +381,13 @@ export default function Header() {
               <Link
                 href="/admin/users"
                 onClick={() => setMobileOpen(false)}
+                aria-current={
+                  pathname.startsWith("/admin/users") ? "page" : undefined
+                }
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   pathname.startsWith("/admin/users")
-                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    ? "bg-cyan-400/15 text-cyan-700 ring-1 ring-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 dark:ring-cyan-400/30"
+                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                 }`}
               >
                 Users
@@ -344,10 +395,13 @@ export default function Header() {
               <Link
                 href="/admin/audit"
                 onClick={() => setMobileOpen(false)}
+                aria-current={
+                  pathname.startsWith("/admin/audit") ? "page" : undefined
+                }
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   pathname.startsWith("/admin/audit")
-                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    ? "bg-cyan-400/15 text-cyan-700 ring-1 ring-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300 dark:ring-cyan-400/30"
+                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                 }`}
               >
                 Audit

@@ -268,7 +268,7 @@ export function ProgressMeter({
   const clamped = Math.max(0, Math.min(100, Math.round(value)));
   return (
     <div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
         <div
           className={`h-full rounded-full ${tone} transition-[width] duration-700`}
           style={{ width: `${clamped}%` }}

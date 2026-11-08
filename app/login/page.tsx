@@ -42,9 +42,9 @@ function LoginForm() {
 
   return (
     <AuthShell>
-      <div className="rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-xl shadow-zinc-900/5 backdrop-blur sm:p-8 dark:border-zinc-800 dark:bg-zinc-900/90">
+      <div className="glass-card-strong p-6 sm:p-8">
         <div className="mb-6">
-          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/15 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
             <span className="live-dot inline-flex h-1.5 w-1.5 rounded-full text-emerald-500" />
             Secure console
           </p>
@@ -57,13 +57,13 @@ function LoginForm() {
         </div>
 
           {error && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+            <div className="mb-4 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 backdrop-blur-xl dark:border-rose-400/20 dark:text-rose-300">
               {error}
             </div>
           )}
 
           {passwordUpdated && (
-            <div className="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300">
+            <div className="mb-4 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 backdrop-blur-xl dark:border-emerald-400/20 dark:text-emerald-300">
               Password updated successfully. Sign in with your new password.
             </div>
           )}
@@ -107,7 +107,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={busy}
-              className="mt-1 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="btn-primary mt-1 w-full"
             >
               {busy ? "Signing in..." : "Sign In"}
             </button>

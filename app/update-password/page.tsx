@@ -29,19 +29,28 @@ export default function UpdatePasswordPage() {
     let active = true;
 
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!active) return;
-      if (session) {
-        setVerified(true);
-        setError(null);
-      } else {
-        setError(
-          "This password reset link is invalid or has expired. Please request a new link."
-        );
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!active) return;
+        if (session) {
+          setVerified(true);
+          setError(null);
+        } else {
+          setError(
+            "This password reset link is invalid or has expired. Please request a new link."
+          );
+        }
+      } catch {
+        if (active) {
+          setError(
+            "This password reset link is invalid or has expired. Please request a new link."
+          );
+        }
+      } finally {
+        if (active) setChecking(false);
       }
-      setChecking(false);
     };
 
     const {
@@ -80,19 +89,29 @@ export default function UpdatePasswordPage() {
     }
 
     setBusy(true);
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: parsed.data.password,
-    });
+    let updateErrorMessage: string | null = null;
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: parsed.data.password,
+      });
+      if (updateError) updateErrorMessage = toUserMessage(updateError);
+    } catch (err) {
+      updateErrorMessage = toUserMessage(err);
+    }
     setBusy(false);
 
-    if (updateError) {
-      setError(toUserMessage(updateError));
+    if (updateErrorMessage) {
+      setError(updateErrorMessage);
       return;
     }
 
     // Recovery sessions are temporary — sign out so the user signs in fresh
     // with their new password.
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Non-fatal: the password was updated successfully.
+    }
     setSuccess(true);
     setForm(INITIAL_FORM);
     router.replace("/login?updated=1");
@@ -102,9 +121,9 @@ export default function UpdatePasswordPage() {
 
   return (
     <AuthShell>
-      <div className="rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-xl shadow-zinc-900/5 backdrop-blur sm:p-8 dark:border-zinc-800 dark:bg-zinc-900/90">
+      <div className="glass-card-strong p-6 sm:p-8">
         <div className="mb-6">
-          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-300">
+          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-400/15 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
             Secure reset
           </p>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">
@@ -136,19 +155,19 @@ export default function UpdatePasswordPage() {
 
           {!checking && error && (
             <div className="flex flex-col gap-4">
-              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+              <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 backdrop-blur-xl dark:border-rose-400/20 dark:text-rose-300">
                 {error}
               </div>
               <div className="flex flex-col gap-2">
                 <Link
                   href="/forgot-password"
-                  className="rounded-md bg-zinc-900 px-4 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="btn-primary w-full"
                 >
                   Request a new link
                 </Link>
                 <Link
                   href="/login"
-                  className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-center text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                  className="btn-secondary w-full"
                 >
                   Back to Sign In
                 </Link>
@@ -159,7 +178,7 @@ export default function UpdatePasswordPage() {
           {verified && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {error && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+                <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 backdrop-blur-xl dark:border-rose-400/20 dark:text-rose-300">
                   {error}
                 </div>
               )}
@@ -199,7 +218,7 @@ export default function UpdatePasswordPage() {
               <button
                 type="submit"
                 disabled={busy}
-                className="mt-1 flex items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="btn-primary mt-1 w-full"
               >
                 {busy && (
                   <svg

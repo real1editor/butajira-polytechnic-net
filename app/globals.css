@@ -3,14 +3,32 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fafafa;
-  --foreground: #171717;
+  --background: #eef1f4;
+  --foreground: #0b1524;
+  --glass-bg: rgb(255 255 255 / 0.6);
+  --glass-bg-strong: rgb(255 255 255 / 0.82);
+  --glass-border: rgb(15 23 42 / 0.08);
+  --glass-border-strong: rgb(15 23 42 / 0.14);
+  --glass-highlight: rgb(255 255 255 / 0.7);
+  --glass-shadow: 0 24px 50px -30px rgb(15 23 42 / 0.5);
+  --glow-cyan: rgb(34 211 238 / 0.16);
+  --glow-emerald: rgb(16 185 129 / 0.16);
+  --glow-violet: rgb(139 92 246 / 0.1);
   color-scheme: light;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #05070a;
+  --foreground: #e6edf3;
+  --glass-bg: rgb(20 28 40 / 0.55);
+  --glass-bg-strong: rgb(16 23 33 / 0.82);
+  --glass-border: rgb(148 163 184 / 0.12);
+  --glass-border-strong: rgb(148 163 184 / 0.2);
+  --glass-highlight: rgb(255 255 255 / 0.06);
+  --glass-shadow: 0 30px 70px -34px rgb(0 0 0 / 0.95);
+  --glow-cyan: rgb(34 211 238 / 0.14);
+  --glow-emerald: rgb(16 185 129 / 0.13);
+  --glow-violet: rgb(139 92 246 / 0.12);
   color-scheme: dark;
 }
 
@@ -23,22 +41,244 @@
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--background);
 }
 
 body {
-  background: var(--background);
+  min-height: 100dvh;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(58rem 38rem at 8% -8%, var(--glow-emerald), transparent 62%),
+    radial-gradient(52rem 36rem at 96% 0%, var(--glow-cyan), transparent 60%),
+    radial-gradient(44rem 32rem at 50% 112%, var(--glow-violet), transparent 66%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(a, button, summary, [role="menuitem"], [role="menuitemradio"]):focus-visible {
+  outline: 2px solid rgb(34 211 238 / 0.8);
+  outline-offset: 2px;
+}
+
+#main-content:focus {
+  outline: none;
 }
 
 ::selection {
-  background-color: rgb(39 39 42 / 0.9);
-  color: #fafafa;
+  background-color: rgb(34 211 238 / 0.35);
+  color: #04131a;
 }
 
 .dark ::selection {
-  background-color: rgb(228 228 231 / 0.9);
-  color: #0a0a0a;
+  background-color: rgb(34 211 238 / 0.35);
+  color: #ecfeff;
+}
+
+/* --------------------------------------------------------------------------
+   Glassmorphism surface system — shared translucent panels, controls and
+   badges. Cyan/emerald accents over a matte NOC backdrop.
+   -------------------------------------------------------------------------- */
+
+.glass-card {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-highlight);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+
+.dark .glass-card {
+  background:
+    linear-gradient(150deg, rgb(24 34 48 / 0.72), rgb(9 13 20 / 0.62));
+}
+
+.glass-card-strong {
+  border-radius: 1rem;
+  border: 1px solid var(--glass-border-strong);
+  background: var(--glass-bg-strong);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-highlight);
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+}
+
+.glass-bar {
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  box-shadow: 0 18px 40px -32px rgb(0 0 0 / 0.8);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+.glass-chip {
+  border: 1px solid var(--glass-border);
+  background: rgb(255 255 255 / 0.4);
+  color: rgb(71 85 105);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.dark .glass-chip {
+  background: rgb(255 255 255 / 0.05);
+  color: rgb(148 163 184);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.65rem;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: #03161a;
+  background-image: linear-gradient(135deg, #5eead4 0%, #22d3ee 100%);
+  box-shadow:
+    0 14px 34px -16px rgb(34 211 238 / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 18px 40px -16px rgb(34 211 238 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--glass-border-strong);
+  padding: 0.5rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: inherit;
+  background: rgb(255 255 255 / 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.dark .btn-secondary {
+  background: rgb(255 255 255 / 0.05);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.7);
+  border-color: rgb(34 211 238 / 0.4);
+}
+
+.dark .btn-secondary:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.65rem;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: #fff;
+  background-image: linear-gradient(135deg, #f43f5e, #dc2626);
+  box-shadow: 0 14px 34px -16px rgb(244 63 94 / 0.8);
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+  filter: none;
+}
+
+.glass-field {
+  width: 100%;
+  border-radius: 0.65rem;
+  border: 1px solid var(--glass-border-strong);
+  background: rgb(255 255 255 / 0.6);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: inherit;
+  outline: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.dark .glass-field {
+  background: rgb(255 255 255 / 0.05);
+}
+
+.dark select.glass-field {
+  background-color: #0d1520;
+  color: #e6edf3;
+}
+
+.dark select.glass-field:focus {
+  background-color: #0d1520;
+}
+
+.dark select.glass-field option,
+.dark select.glass-field optgroup {
+  background-color: #0d1520;
+  color: #e6edf3;
+}
+
+.dark select.glass-field option:checked {
+  background-color: #12313d;
+  color: #f0fdff;
+}
+
+.glass-field::placeholder {
+  color: rgb(100 116 139 / 0.8);
+}
+
+.glass-field:focus {
+  border-color: rgb(34 211 238 / 0.65);
+  background: rgb(255 255 255 / 0.85);
+  box-shadow: 0 0 0 3px rgb(34 211 238 / 0.2);
+}
+
+.dark .glass-field:focus {
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: 0 0 0 3px rgb(34 211 238 / 0.15);
+}
+
+.glass-table thead {
+  background: transparent;
+}
+
+.glass-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.glass-table tbody tr:hover {
+  background: rgb(34 211 238 / 0.06);
 }
 
 /* --------------------------------------------------------------------------

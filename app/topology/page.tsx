@@ -423,7 +423,7 @@ export default function TopologyPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <header className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -436,15 +436,15 @@ export default function TopologyPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900">
+            <span className="glass-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {activeLinks} active links
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+            <span className="glass-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
               {plannedLinks} planned
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900">
+            <span className="glass-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               {isolated.length} isolated
             </span>
@@ -454,8 +454,8 @@ export default function TopologyPage() {
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-          <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+          <section className="glass-card overflow-hidden">
+            <div className="flex flex-col gap-3 border-b border-slate-200/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
               <input
                 type="search"
                 value={query}
@@ -469,7 +469,7 @@ export default function TopologyPage() {
                   type="button"
                   onClick={() => zoomBy(1.2)}
                   aria-label="Zoom in"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300/70 bg-white/50 text-slate-600 backdrop-blur transition-colors hover:bg-white/80 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                 >
                   +
                 </button>
@@ -477,14 +477,14 @@ export default function TopologyPage() {
                   type="button"
                   onClick={() => zoomBy(1 / 1.2)}
                   aria-label="Zoom out"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300/70 bg-white/50 text-slate-600 backdrop-blur transition-colors hover:bg-white/80 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                 >
                   −
                 </button>
                 <button
                   type="button"
                   onClick={fitView}
-                  className="inline-flex h-8 items-center justify-center rounded-md border border-zinc-200 px-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="glass-chip inline-flex h-8 items-center justify-center px-2.5 text-xs font-medium transition-colors hover:text-cyan-700 dark:hover:text-cyan-300"
                 >
                   Fit
                 </button>
@@ -644,7 +644,7 @@ export default function TopologyPage() {
               )}
 
               {!loading && assets.length > 0 && (
-                <div className="pointer-events-none absolute bottom-3 left-3 flex flex-wrap gap-2 rounded-md border border-zinc-200 bg-white/90 px-2.5 py-1.5 text-[10px] font-medium text-zinc-500 backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-400">
+                <div className="glass-card-strong pointer-events-none absolute bottom-3 left-3 flex flex-wrap gap-2 rounded-lg px-2.5 py-1.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   {(Object.keys(STATUS_THEME) as AssetStatus[]).map((status) => (
                     <span key={status} className="inline-flex items-center gap-1">
                       <span
@@ -660,7 +660,7 @@ export default function TopologyPage() {
           </section>
 
           <aside className="space-y-4">
-            <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <section className="glass-card p-4">
               <h2 className="text-sm font-semibold tracking-tight">
                 {selectedAsset ? "Asset inspector" : "Select a node"}
               </h2>
@@ -720,7 +720,7 @@ export default function TopologyPage() {
                           return (
                             <li
                               key={cable.id}
-                              className="rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs dark:border-zinc-700"
+                              className="rounded-lg border border-slate-200/60 bg-white/40 px-2.5 py-1.5 text-xs backdrop-blur dark:border-white/10 dark:bg-white/5"
                             >
                               <span className="font-mono text-[10px] text-zinc-500">
                                 P{local.port_number} → P{peer.port_number}
@@ -747,7 +747,7 @@ export default function TopologyPage() {
               )}
             </section>
 
-            <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <section className="glass-card p-4">
               <h2 className="text-sm font-semibold tracking-tight">Health signals</h2>
               <ul className="mt-2 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-300">
                 <li className="flex items-center justify-between gap-2">
@@ -776,7 +776,7 @@ export default function TopologyPage() {
                 </li>
               </ul>
               {isolated.length > 0 && (
-                <div className="mt-3 border-t border-zinc-200 pt-2 dark:border-zinc-700">
+                <div className="mt-3 border-t border-slate-200/60 pt-2 dark:border-white/10">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
                     Needs attention
                   </p>

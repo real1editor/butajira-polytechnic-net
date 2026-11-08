@@ -27,7 +27,7 @@ function ToastCard({ item, onClose }: { item: ToastItem; onClose: () => void }) 
   return (
     <div
       role="status"
-      className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+      className="glass-card-strong animate-palette-in pointer-events-auto flex w-full max-w-md items-center gap-3 px-4 py-3"
     >
       <span
         className={`inline-flex h-2.5 w-2.5 shrink-0 rounded-full ${typeStyles[item.type].icon}`}
@@ -37,7 +37,7 @@ function ToastCard({ item, onClose }: { item: ToastItem; onClose: () => void }) 
         type="button"
         onClick={onClose}
         aria-label="Dismiss notification"
-        className="rounded p-0.5 text-zinc-400 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+        className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-white/60 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-slate-200"
       >
         <svg
           className="h-4 w-4"

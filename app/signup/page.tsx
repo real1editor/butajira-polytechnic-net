@@ -56,7 +56,7 @@ export default function SignupPage() {
   if (needsConfirmation) {
     return (
       <AuthShell>
-        <div className="rounded-2xl border border-zinc-200 bg-white/90 p-8 text-center shadow-xl shadow-zinc-900/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/90">
+        <div className="glass-card-strong p-8 text-center">
           <div className="mb-6 flex flex-col items-center">
             <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
               <svg
@@ -84,7 +84,7 @@ export default function SignupPage() {
           </div>
           <Link
             href="/login"
-            className="inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="inline-block btn-primary"
           >
             Back to Sign In
           </Link>
@@ -95,9 +95,9 @@ export default function SignupPage() {
 
   return (
     <AuthShell>
-      <div className="rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-xl shadow-zinc-900/5 backdrop-blur sm:p-8 dark:border-zinc-800 dark:bg-zinc-900/90">
+      <div className="glass-card-strong p-6 sm:p-8">
         <div className="mb-6">
-          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          <p className="mb-1 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/15 px-2.5 py-0.5 text-[11px] font-medium text-cyan-700 dark:text-cyan-300">
             Request access
           </p>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">
@@ -110,7 +110,7 @@ export default function SignupPage() {
         </div>
 
           {error && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+            <div className="mb-4 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 backdrop-blur-xl dark:border-rose-400/20 dark:text-rose-300">
               {error}
             </div>
           )}
@@ -172,7 +172,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={busy}
-              className="mt-1 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="btn-primary mt-1 w-full"
             >
               {busy ? "Creating account..." : "Create Account"}
             </button>

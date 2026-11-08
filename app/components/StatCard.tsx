@@ -77,19 +77,20 @@ export default function StatCard({
   }, [label, value]);
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md sm:p-5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+    <div className="glass-card group relative overflow-hidden p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:shadow-[0_28px_60px_-30px_rgba(34,211,238,0.45)] sm:p-5">
       <span className={`absolute inset-x-0 top-0 h-0.5 ${bar}`} aria-hidden="true" />
-      <div className="flex items-start justify-between gap-3">
+      <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl transition-opacity duration-300 group-hover:bg-cyan-400/20" aria-hidden="true" />
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+          <p className="truncate text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
             {label}
           </p>
-          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight sm:text-3xl">
+          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white sm:text-3xl">
             {display}
           </p>
         </div>
         <span
-          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accent}`}
+          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-white/10 ${accent}`}
         >
           <svg
             className="h-4 w-4"
@@ -108,14 +109,14 @@ export default function StatCard({
         </span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2">
+      <div className="relative mt-3 flex items-center justify-between gap-2">
         {live ? (
           <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
             <span className="live-dot inline-flex h-1.5 w-1.5 rounded-full text-emerald-500" />
             Live
           </span>
         ) : (
-          <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">
             &nbsp;
           </span>
         )}

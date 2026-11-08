@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AuditLog,
@@ -23,9 +23,12 @@ const TABLE_LABELS: Record<AuditTableName | "all", string> = {
 };
 
 const ACTION_STYLES: Record<AuditLogAction, string> = {
-  INSERT: "bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-300",
-  UPDATE: "bg-blue-100 text-blue-800 dark:bg-blue-500/10 dark:text-blue-300",
-  DELETE: "bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-300",
+  INSERT:
+    "border border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:text-emerald-300",
+  UPDATE:
+    "border border-cyan-400/30 bg-cyan-400/15 text-cyan-700 dark:text-cyan-300",
+  DELETE:
+    "border border-rose-400/30 bg-rose-400/15 text-rose-700 dark:text-rose-300",
 };
 
 type ChangeData = {
@@ -154,6 +157,8 @@ function ChangeSummary({ log }: { log: AuditLog }) {
   );
 }
 
+const PAGE_SIZE = 25;
+
 export default function AuditAdminPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,24 +166,39 @@ export default function AuditAdminPage() {
   const [tableFilter, setTableFilter] = useState<AuditTableName | "all">("all");
   const [actionFilter, setActionFilter] = useState<AuditLogAction | "all">("all");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    fetchAuditLogs().then((res) => {
-      if (res.error) setError(res.error);
-      else setLogs(res.data ?? []);
+    let active = true;
+
+    fetchAuditLogs({
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+      table: tableFilter,
+      action: actionFilter,
+    }).then((res) => {
+      if (!active) return;
+      if (res.error) {
+        setError(res.error);
+        setLogs([]);
+        setTotal(0);
+      } else {
+        setLogs(res.data ?? []);
+        setTotal(res.count ?? 0);
+      }
       setLoading(false);
     });
-  }, []);
 
-  const filtered = useMemo(
-    () =>
-      logs.filter(
-        (log) =>
-          (tableFilter === "all" || log.table_name === tableFilter) &&
-          (actionFilter === "all" || log.action === actionFilter)
-      ),
-    [logs, tableFilter, actionFilter]
-  );
+    return () => {
+      active = false;
+    };
+  }, [actionFilter, page, tableFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rangeStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, total);
+  const hasFilters = tableFilter !== "all" || actionFilter !== "all";
 
   function toggleExpand(id: string) {
     setExpanded((prev) => {
@@ -190,7 +210,7 @@ export default function AuditAdminPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
       <ProtectRole
         allowedRoles={["admin"]}
         fallback={
@@ -224,21 +244,30 @@ export default function AuditAdminPage() {
 
           {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-          <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-800">
+          <section className="glass-card overflow-hidden">
+            <div className="border-b border-slate-200/60 px-4 py-4 sm:px-6 dark:border-white/10">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-lg font-medium">Recent Activity</h2>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {loading ? "Loading..." : `${filtered.length} of ${logs.length} events`}
+                  <p
+                    className="text-sm text-zinc-600 dark:text-zinc-400"
+                    aria-live="polite"
+                  >
+                    {loading
+                      ? "Loading..."
+                      : `${total} event${total === 1 ? "" : "s"}${
+                          hasFilters ? " matching filters" : ""
+                        }`}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={tableFilter}
-                    onChange={(e) =>
-                      setTableFilter(e.target.value as AuditTableName | "all")
-                    }
+                    onChange={(e) => {
+                      setLoading(true);
+                      setTableFilter(e.target.value as AuditTableName | "all");
+                      setPage(0);
+                    }}
                     aria-label="Filter by table"
                     className={inputClass}
                   >
@@ -250,9 +279,11 @@ export default function AuditAdminPage() {
                   </select>
                   <select
                     value={actionFilter}
-                    onChange={(e) =>
-                      setActionFilter(e.target.value as AuditLogAction | "all")
-                    }
+                    onChange={(e) => {
+                      setLoading(true);
+                      setActionFilter(e.target.value as AuditLogAction | "all");
+                      setPage(0);
+                    }}
                     aria-label="Filter by action"
                     className={inputClass}
                   >
@@ -269,16 +300,16 @@ export default function AuditAdminPage() {
               <div className="px-6 py-10 text-center text-sm text-zinc-500">
                 Loading audit trail...
               </div>
-            ) : filtered.length === 0 ? (
+            ) : logs.length === 0 ? (
               <div className="px-6 py-10 text-center text-sm text-zinc-500">
-                {logs.length === 0
-                  ? "No recorded activity yet. Mutations made through the app are captured here automatically."
-                  : "No events match your filters."}
+                {hasFilters
+                  ? "No events match your filters."
+                  : "No recorded activity yet. Mutations made through the app are captured here automatically."}
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-[720px] divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
-                  <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+                <table className="min-w-[720px] divide-y divide-slate-200/60 text-sm dark:divide-white/10">
+                  <thead className="bg-transparent">
                     <tr>
                       <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">When</th>
                       <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Table</th>
@@ -288,12 +319,12 @@ export default function AuditAdminPage() {
                       <th className="px-4 py-3 text-right font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Details</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {filtered.map((log) => {
+                  <tbody className="divide-y divide-slate-200/50 dark:divide-white/5">
+                    {logs.map((log) => {
                       const open = expanded.has(log.id);
                       return (
                         <Fragment key={log.id}>
-                          <tr className="align-top hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                          <tr className="align-top hover:bg-cyan-400/5 dark:hover:bg-cyan-400/5">
                             <td className="whitespace-nowrap px-4 py-3 text-zinc-600 sm:px-6 dark:text-zinc-400">
                               {formatDateTime(log.created_at)}
                             </td>
@@ -313,7 +344,7 @@ export default function AuditAdminPage() {
                               {log.actor_profiles?.display_name ?? "System"}
                             </td>
                             <td className="hidden px-4 py-3 font-mono text-xs text-zinc-500 lg:table-cell lg:px-6">
-                              {log.record_id.slice(0, 8)}…
+                              {log.record_id ? `${log.record_id.slice(0, 8)}…` : "—"}
                             </td>
                             <td className="px-4 py-3 sm:px-6">
                               <div className="flex items-center justify-end gap-3">
@@ -324,7 +355,7 @@ export default function AuditAdminPage() {
                                   type="button"
                                   onClick={() => toggleExpand(log.id)}
                                   aria-expanded={open}
-                                  className="rounded-md border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                  className="glass-chip rounded-lg px-3 py-1 text-xs font-medium transition-colors hover:text-cyan-700 dark:hover:text-cyan-300"
                                 >
                                   {open ? "Hide" : "View"}
                                 </button>
@@ -332,7 +363,7 @@ export default function AuditAdminPage() {
                             </td>
                           </tr>
                           {open && (
-                            <tr className="border-t border-zinc-100 bg-zinc-50/70 dark:border-zinc-800 dark:bg-zinc-900/60">
+                            <tr className="border-t border-slate-200/50 bg-white/30 dark:border-white/10 dark:bg-white/5">
                               <td
                                 colSpan={6}
                                 className="px-4 py-4 sm:px-6"
@@ -346,6 +377,41 @@ export default function AuditAdminPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {!loading && total > 0 && (
+              <div className="flex flex-col gap-3 border-t border-slate-200/60 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-white/10">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Showing {rangeStart}–{rangeEnd} of {total}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoading(true);
+                      setPage((value) => Math.max(0, value - 1));
+                    }}
+                    disabled={page === 0 || loading}
+                    className="btn-secondary px-3 py-1.5 text-xs"
+                  >
+                    Previous
+                  </button>
+                  <span className="min-w-[7rem] text-center text-xs text-zinc-500 dark:text-zinc-400">
+                    Page {page + 1} of {pageCount}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoading(true);
+                      setPage((value) => Math.min(pageCount - 1, value + 1));
+                    }}
+                    disabled={page >= pageCount - 1 || loading}
+                    className="btn-secondary px-3 py-1.5 text-xs"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </section>

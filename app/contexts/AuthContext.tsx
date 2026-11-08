@@ -65,17 +65,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email ?? null });
-        fetchProfile(session.user.id).then((p) => {
+    let active = true;
+
+    async function bootstrap() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!active) return;
+        if (session?.user) {
+          setUser({ id: session.user.id, email: session.user.email ?? null });
+          const p = await fetchProfile(session.user.id);
+          if (!active) return;
           setProfile(p);
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
+        }
+      } catch {
+        // A failed session probe must never leave the UI stuck loading.
+        if (active) {
+          setUser(null);
+          setProfile(null);
+        }
+      } finally {
+        if (active) setLoading(false);
       }
-    });
+    }
+
+    bootstrap();
 
     const {
       data: { subscription },
@@ -86,7 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Defer the profile query: Supabase warns that awaiting other
         // client calls inside this callback can deadlock the auth client.
         setTimeout(() => {
-          fetchProfile(id).then(setProfile);
+          fetchProfile(id).then((p) => {
+            if (active) setProfile(p);
+          });
         }, 0);
       } else {
         setUser(null);
@@ -94,7 +111,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -132,19 +152,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = useCallback(
     async (email: string, password: string): Promise<string | null> => {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) return toUserMessage(error);
-      router.refresh();
-      return null;
+      try {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) return toUserMessage(error);
+        router.refresh();
+        return null;
+      } catch (err) {
+        return toUserMessage(err);
+      }
     },
     [router]
   );
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore network failures — clear local state regardless.
+    }
     setUser(null);
     setProfile(null);
     router.refresh();

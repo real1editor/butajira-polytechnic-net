@@ -17,11 +17,11 @@ import { formatDateTime } from "@/lib/utils";
 const ROLE_OPTIONS = ["admin", "technician", "viewer"] as const;
 
 const ROLE_BADGE: Record<string, string> = {
-  admin: "bg-blue-100 text-blue-800 dark:bg-blue-500/10 dark:text-blue-300",
+  admin: "border border-cyan-400/30 bg-cyan-400/15 text-cyan-700 dark:text-cyan-300",
   technician:
-    "bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-300",
+    "border border-emerald-400/30 bg-emerald-400/15 text-emerald-700 dark:text-emerald-300",
   viewer:
-    "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+    "border border-slate-400/30 bg-slate-400/10 text-slate-600 dark:text-slate-400",
 };
 
 export default function UsersAdminPage() {
@@ -56,7 +56,7 @@ export default function UsersAdminPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
       <ProtectRole
         allowedRoles={["admin"]}
         fallback={
@@ -87,8 +87,8 @@ export default function UsersAdminPage() {
 
           {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-          <section className="rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-800">
+          <section className="glass-card">
+            <div className="border-b border-slate-200/60 px-4 py-4 sm:px-6 dark:border-white/10">
               <h2 className="text-lg font-medium">All Users</h2>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
                 {loading ? "Loading..." : `${profiles.length} account${profiles.length !== 1 ? "s" : ""}`}
@@ -105,8 +105,8 @@ export default function UsersAdminPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-[560px] divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
-                  <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+                <table className="min-w-[560px] divide-y divide-slate-200/60 text-sm dark:divide-white/10">
+                  <thead className="bg-transparent">
                     <tr>
                       <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">
                         Display Name
@@ -122,20 +122,20 @@ export default function UsersAdminPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tbody className="divide-y divide-slate-200/50 dark:divide-white/5">
                     {profiles.map((p) => {
                       const isSelf = p.id === user?.id;
                       return (
                         <tr
                           key={p.id}
-                          className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                          className="hover:bg-cyan-400/5 dark:hover:bg-cyan-400/5"
                         >
                           <td className="px-4 py-3 sm:px-6">
                             <span className="font-medium">
                               {p.display_name ?? "—"}
                             </span>
                             {isSelf && (
-                              <span className="ml-2 rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                              <span className="glass-chip ml-2 rounded px-1.5 py-0.5 text-xs font-medium">
                                 You
                               </span>
                             )}
@@ -185,7 +185,7 @@ export default function UsersAdminPage() {
             )}
           </section>
 
-          <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600 sm:p-5 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
+          <div className="glass-card mt-6 p-4 text-sm text-slate-600 sm:p-5 dark:text-slate-400">
             <h3 className="mb-1 font-medium text-zinc-800 dark:text-zinc-200">
               Role Permissions
             </h3>

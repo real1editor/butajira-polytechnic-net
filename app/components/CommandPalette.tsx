@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { fetchAssets, type Asset, TYPE_LABELS } from "@/lib/queries";
 import { useAuth, usePermissions } from "@/app/contexts/AuthContext";
 import { useTheme } from "@/app/contexts/ThemeContext";
+import { useDialog } from "@/app/components/useDialog";
 
 const GLYPHS = {
   dashboard: "M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z",
@@ -71,7 +72,7 @@ function Glyph({ name, className = "h-4 w-4" }: { name: GlyphName; className?: s
 
 function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+    <kbd className="glass-chip rounded px-1.5 py-0.5 font-mono text-[10px] font-medium">
       {children}
     </kbd>
   );
@@ -88,8 +89,8 @@ export default function CommandPalette() {
   const [active, setActive] = useState(0);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const openPalette = useCallback(() => {
     setQuery("");
@@ -98,6 +99,8 @@ export default function CommandPalette() {
   }, []);
 
   const closePalette = useCallback(() => setOpen(false), []);
+
+  useDialog(open, closePalette, panelRef);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -118,17 +121,6 @@ export default function CommandPalette() {
       window.removeEventListener("bpc:open-command", onOpen as EventListener);
     };
   }, [closePalette, open, openPalette]);
-
-  useEffect(() => {
-    if (!open) return;
-    const timer = window.setTimeout(() => inputRef.current?.focus(), 20);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.clearTimeout(timer);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
 
   useEffect(() => {
     if (!open || !user || assetsLoaded) return;
@@ -354,23 +346,25 @@ export default function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-zinc-950/50 p-4 pt-[12vh] backdrop-blur-sm animate-backdrop-in"
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-slate-950/60 p-4 pt-[12vh] backdrop-blur-sm animate-backdrop-in"
       onClick={() => setOpen(false)}
       role="presentation"
     >
       <div
-        className="animate-palette-in w-full max-w-xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl ring-1 ring-black/5 dark:border-zinc-700 dark:bg-zinc-900"
+        ref={panelRef}
+        tabIndex={-1}
+        className="glass-card-strong animate-palette-in w-full max-w-xl overflow-hidden outline-none"
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
+        <div className="flex items-center gap-3 border-b border-slate-200/60 px-4 py-3 dark:border-white/10">
           <span className="text-zinc-400 dark:text-zinc-500">
             <Glyph name="search" className="h-5 w-5" />
           </span>
           <input
-            ref={inputRef}
+            data-autofocus
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -378,7 +372,7 @@ export default function CommandPalette() {
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search pages, assets or actions…"
-            className="min-w-0 flex-1 bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
             aria-label="Search commands"
             autoComplete="off"
             spellCheck={false}
@@ -408,15 +402,15 @@ export default function CommandPalette() {
                       onClick={() => command.run()}
                       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
                         isActive
-                          ? "bg-zinc-100 dark:bg-zinc-800"
-                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                          ? "bg-cyan-400/15 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300"
+                          : "hover:bg-cyan-400/10"
                       }`}
                     >
                       <span
                         className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${
                           isActive
-                            ? "border-zinc-300 bg-white text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
-                            : "border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400"
+                            ? "border-cyan-400/40 bg-cyan-400/15 text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-400/10 dark:text-cyan-300"
+                            : "border-slate-200/60 bg-white/40 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
                         }`}
                       >
                         <Glyph name={command.glyph} />
@@ -444,7 +438,7 @@ export default function CommandPalette() {
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-zinc-200 px-4 py-2.5 text-[11px] text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-200/60 px-4 py-2.5 text-[11px] text-slate-400 dark:border-white/10 dark:text-slate-500">
           <span className="inline-flex items-center gap-1.5">
             <Kbd>↑</Kbd>
             <Kbd>↓</Kbd>

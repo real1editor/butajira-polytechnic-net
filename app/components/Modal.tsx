@@ -1,6 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
+import { useDialog } from "@/app/components/useDialog";
 
 type ModalProps = {
   open: boolean;
@@ -10,28 +11,38 @@ type ModalProps = {
 };
 
 export default function Modal({ open, title, children, onClose }: ModalProps) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialog(open, onClose, panelRef);
+
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/40 p-4"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-backdrop-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-lg border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+        ref={panelRef}
+        tabIndex={-1}
+        className="glass-card-strong animate-palette-in w-full max-w-lg overflow-hidden outline-none"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
       >
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-white">
+        <div className="flex items-center justify-between border-b border-slate-200/60 px-6 py-4 dark:border-white/10">
+          <h2
+            id={titleId}
+            className="text-base font-semibold text-slate-900 dark:text-white"
+          >
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="rounded p-0.5 text-zinc-400 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+            className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-white/60 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-slate-200"
           >
             <svg
               className="h-5 w-5"

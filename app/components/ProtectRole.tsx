@@ -45,7 +45,7 @@ export function ReadOnlyNotice({
   return (
     <div
       role="status"
-      className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300"
+      className="mb-6 flex items-start gap-3 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-700 backdrop-blur-xl dark:border-amber-400/20 dark:text-amber-300"
     >
       <svg
         className="mt-0.5 h-5 w-5 shrink-0"

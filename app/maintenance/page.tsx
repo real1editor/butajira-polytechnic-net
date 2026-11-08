@@ -147,7 +147,7 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex flex-1 flex-col font-sans text-slate-900 dark:text-slate-100">
       {deleting && (
         <ConfirmDialog
           open={!!deleting}
@@ -172,7 +172,7 @@ export default function MaintenancePage() {
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
         <ProtectRole allowedRoles={["admin", "technician"]}>
-          <section className="mb-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="glass-card mb-6 p-4 sm:mb-8 sm:p-6">
             <h2 className="mb-4 text-lg font-medium">Log Maintenance</h2>
             <form
               onSubmit={handleSubmit}
@@ -295,7 +295,7 @@ export default function MaintenancePage() {
                 <button
                   type="submit"
                   disabled={saving || !form.asset_id}
-                  className="w-full rounded-md bg-zinc-900 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="btn-primary w-full sm:w-auto"
                 >
                   {saving ? "Saving..." : "Add Log"}
                 </button>
@@ -304,8 +304,8 @@ export default function MaintenancePage() {
           </section>
         </ProtectRole>
 
-        <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-800">
+        <section className="glass-card overflow-hidden">
+          <div className="border-b border-slate-200/60 px-4 py-4 sm:px-6 dark:border-white/10">
             <h2 className="text-lg font-medium">Maintenance History</h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               {loading ? "Loading..." : `${logs.length} records`}
@@ -324,8 +324,8 @@ export default function MaintenancePage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-[720px] divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50">
+              <table className="min-w-[720px] divide-y divide-slate-200/60 text-sm dark:divide-white/10">
+                <thead className="bg-transparent">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Date</th>
                     <th className="px-4 py-3 text-left font-medium text-zinc-500 sm:px-6 dark:text-zinc-400">Asset</th>
@@ -340,9 +340,9 @@ export default function MaintenancePage() {
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-slate-200/50 dark:divide-white/5">
                   {logs.map((log) => (
-                    <tr key={log.id} className="align-top hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                    <tr key={log.id} className="align-top hover:bg-cyan-400/5 dark:hover:bg-cyan-400/5">
                       <td className="px-4 py-3 whitespace-nowrap text-zinc-600 sm:px-6 dark:text-zinc-400">
                         {formatDate(log.log_date)}
                       </td>
@@ -385,7 +385,7 @@ export default function MaintenancePage() {
                             <button
                               type="button"
                               onClick={() => setDeleting(log)}
-                              className="text-sm font-medium text-zinc-400 transition-colors hover:text-red-600"
+                              className="text-sm font-medium text-slate-500 transition-colors hover:text-rose-500 dark:text-slate-400"
                             >
                               Delete
                             </button>
